@@ -13,11 +13,19 @@ import os
 # IMPORTACIONES DE GRÁFICOS (DIRECTAS COMO EN APP1.PY)
 # =====================
 
-# Importar matplotlib directamente (como en APP1.py)
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle, Polygon
-import matplotlib
-matplotlib.use('Agg')  # Backend no interactivo para Streamlit
+# Importar matplotlib con manejo de errores
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle, Polygon
+    import matplotlib
+    matplotlib.use('Agg')  # Backend no interactivo para Streamlit
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+    # Crear placeholders para evitar errores
+    plt = None
+    Rectangle = None
+    Polygon = None
 
 # Verificación de plotly
 try:
@@ -49,11 +57,14 @@ except ImportError:
     # No mostrar warning aquí para evitar problemas en la carga inicial
 
 # Variables globales para compatibilidad
-MATPLOTLIB_AVAILABLE = True  # Siempre disponible ya que se importa directamente
+# MATPLOTLIB_AVAILABLE se define en el bloque try/except de arriba
 
 def verificar_dependencias():
     """Verifica las dependencias disponibles y muestra warnings apropiados"""
     warnings = []
+    
+    if not MATPLOTLIB_AVAILABLE:
+        warnings.append("⚠️ Matplotlib no está instalado. Los gráficos básicos no estarán disponibles.")
     
     if not PLOTLY_AVAILABLE:
         warnings.append("⚠️ Plotly no está instalado. Los gráficos interactivos no estarán disponibles.")
@@ -65,6 +76,19 @@ def verificar_dependencias():
         warnings.append("⚠️ Sistema de pagos no disponible. Usando modo demo.")
     
     return warnings
+
+def safe_matplotlib_plot(func):
+    """Decorador para manejar gráficos de matplotlib de manera segura"""
+    def wrapper(*args, **kwargs):
+        if not MATPLOTLIB_AVAILABLE:
+            st.warning("⚠️ Matplotlib no está disponible. No se puede generar el gráfico.")
+            return None
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            st.error(f"Error generando gráfico: {str(e)}")
+            return None
+    return wrapper
 
 # =====================
 # FUNCIONES PARA GRÁFICOS DE CORTANTES Y MOMENTOS (ARTHUR H. NILSON)
@@ -183,6 +207,7 @@ def calcular_cortantes_momentos_viga_continua(L1, L2, w1, w2):
     
     return x1, V1, M1, x2, V2, M2, R_A, R_B1, R_B2, R_C, M_B
 
+@safe_matplotlib_plot
 def graficar_cortantes_momentos_nilson(L, w, P=None, a=None, tipo_viga="simple"):
     """
     Genera gráficos de cortantes y momentos según Arthur H. Nilson
@@ -225,6 +250,7 @@ def graficar_cortantes_momentos_nilson(L, w, P=None, a=None, tipo_viga="simple")
     plt.tight_layout()
     return fig
 
+@safe_matplotlib_plot
 def graficar_viga_continua_nilson(L1, L2, w1, w2):
     """
     Genera gráficos de cortantes y momentos para viga continua
@@ -384,6 +410,7 @@ def calcular_cortantes_momentos_viga_continua_mccormac(L1, L2, w1, w2):
     
     return x1, V1, M1, x2, V2, M2, R_A, R_B1, R_B2, R_C, M_B
 
+@safe_matplotlib_plot
 def graficar_cortantes_momentos_mccormac(L, w, P=None, a=None, tipo_viga="simple"):
     """
     Genera gráficos de cortantes y momentos según Jack C. McCormac
@@ -431,6 +458,7 @@ def graficar_cortantes_momentos_mccormac(L, w, P=None, a=None, tipo_viga="simple
         st.error(f"Error generando gráfico: {str(e)}")
         return None
 
+@safe_matplotlib_plot
 def graficar_viga_continua_mccormac(L1, L2, w1, w2):
     """
     Genera gráficos de cortantes y momentos para viga continua según McCormac
