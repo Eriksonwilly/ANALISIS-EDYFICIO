@@ -2732,13 +2732,13 @@ Plan: Gratuito
     elif opcion == "✉️ Contacto":
         st.title("✉️ Contacto")
         st.write("""
-        ### 🏗️ CONSORCIO DEJ
+        ### 🏗️ GRUPO SELECTIVA - CONSORCIO DEJ
         **Información de Contacto:**
         
-        📧 Email: contacto@consorciodej.com  
-        📱 Teléfono: +123 456 7890  
+        📧 Email: administrador@consorciodej.com  
+        📱 Teléfono: +51 967573364  
         🌐 Web: www.consorciodej.com  
-        📍 Dirección: [Tu dirección aquí]
+        📍 Dirección: [Adepa - Jose Luis B. Rivero]
         
         **Horarios de Atención:**
         Lunes a Viernes: 8:00 AM - 6:00 PM
