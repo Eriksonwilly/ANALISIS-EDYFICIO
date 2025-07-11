@@ -212,6 +212,10 @@ def graficar_cortantes_momentos_nilson(L, w, P=None, a=None, tipo_viga="simple")
     """
     Genera gráficos de cortantes y momentos según Arthur H. Nilson
     """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        st.warning("⚠️ Matplotlib no está disponible. No se puede generar el gráfico.")
+        return None
+        
     if tipo_viga == "simple":
         x, V, M = calcular_cortantes_momentos_viga_simple(L, w, P, a)
     elif tipo_viga == "empotrada":
@@ -255,6 +259,10 @@ def graficar_viga_continua_nilson(L1, L2, w1, w2):
     """
     Genera gráficos de cortantes y momentos para viga continua
     """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        st.warning("⚠️ Matplotlib no está disponible. No se puede generar el gráfico.")
+        return None
+        
     x1, V1, M1, x2, V2, M2, R_A, R_B1, R_B2, R_C, M_B = calcular_cortantes_momentos_viga_continua(L1, L2, w1, w2)
     
     # Crear figura con subplots
@@ -2798,16 +2806,18 @@ Plan: Gratuito
                     st.info("ℹ️ Zapata pequeña - Considerar zapatas combinadas")
                 
                 # Gráfico de resultados
+                st.subheader("📈 Gráficos de Resultados")
+                
+                # Gráfico 1: Propiedades principales
                 if PLOTLY_AVAILABLE:
-                    st.subheader("📈 Gráfico de Resultados")
                     datos_zapata = pd.DataFrame({
                         'Propiedad': ['Capacidad (kg/cm²)', 'Área (cm²)', 'Lado (cm)', 'Peralte (cm)'],
                         'Valor': [resultados_zapata['qn'], resultados_zapata['A_estimada']/10000, 
                                  resultados_zapata['lado_zapata']/100, resultados_zapata['d_estimado']/100]
                     })
                     
-                    fig = px.bar(datos_zapata, x='Propiedad', y='Valor',
-                                title="Resultados del Diseño de Zapata - Plan Premium",
+                    fig1 = px.bar(datos_zapata, x='Propiedad', y='Valor',
+                                title="Propiedades Principales de la Zapata",
                                 color='Propiedad',
                                 color_discrete_map={
                                     'Capacidad (kg/cm²)': '#2E8B57',
@@ -2816,14 +2826,91 @@ Plan: Gratuito
                                     'Peralte (cm)': '#FFD700'
                                 })
                     
-                    fig.update_layout(
+                    fig1.update_layout(
                         xaxis_title="Propiedad",
                         yaxis_title="Valor",
                         height=400
                     )
                     
-                    fig.update_traces(texttemplate='%{y:.2f}', textposition='outside')
-                    st.plotly_chart(fig, use_container_width=True)
+                    fig1.update_traces(texttemplate='%{y:.2f}', textposition='outside')
+                    st.plotly_chart(fig1, use_container_width=True)
+                
+                # Gráfico 2: Fuerzas de corte
+                if PLOTLY_AVAILABLE:
+                    datos_corte = pd.DataFrame({
+                        'Tipo de Corte': ['Punzonamiento', 'Flexión'],
+                        'Resistencia (kg)': [resultados_zapata['Vc_punzonamiento'], resultados_zapata['Vc_flexion']]
+                    })
+                    
+                    fig2 = px.pie(datos_corte, values='Resistencia (kg)', names='Tipo de Corte',
+                                title="Distribución de Resistencia al Corte",
+                                color_discrete_map={
+                                    'Punzonamiento': '#FF6B6B',
+                                    'Flexión': '#4ECDC4'
+                                })
+                    
+                    fig2.update_traces(textposition='inside', textinfo='percent+label+value')
+                    st.plotly_chart(fig2, use_container_width=True)
+                
+                # Gráfico 3: Comparación con valores típicos
+                if PLOTLY_AVAILABLE:
+                    datos_comparacion = pd.DataFrame({
+                        'Parámetro': ['Capacidad Portante', 'Área Zapata', 'Peralte'],
+                        'Valor Actual': [resultados_zapata['qn'], resultados_zapata['A_estimada']/10000, resultados_zapata['d_estimado']/100],
+                        'Valor Típico': [1.0, 2.0, 0.3]  # Valores típicos de referencia
+                    })
+                    
+                    fig3 = px.bar(datos_comparacion, x='Parámetro', y=['Valor Actual', 'Valor Típico'],
+                                title="Comparación con Valores Típicos",
+                                barmode='group',
+                                color_discrete_map={
+                                    'Valor Actual': '#2E8B57',
+                                    'Valor Típico': '#FFD700'
+                                })
+                    
+                    fig3.update_layout(
+                        xaxis_title="Parámetro",
+                        yaxis_title="Valor",
+                        height=400
+                    )
+                    
+                    st.plotly_chart(fig3, use_container_width=True)
+                
+                # Gráfico alternativo con matplotlib si plotly no está disponible
+                elif MATPLOTLIB_AVAILABLE and plt is not None:
+                    try:
+                        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+                        
+                        # Gráfico de barras para propiedades principales
+                        propiedades = ['Capacidad', 'Área', 'Lado', 'Peralte']
+                        valores = [resultados_zapata['qn'], resultados_zapata['A_estimada']/10000, 
+                                 resultados_zapata['lado_zapata']/100, resultados_zapata['d_estimado']/100]
+                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
+                        
+                        bars = ax1.bar(propiedades, valores, color=colors)
+                        ax1.set_title("Propiedades Principales de la Zapata")
+                        ax1.set_ylabel("Valor")
+                        
+                        for bar in bars:
+                            height = bar.get_height()
+                            ax1.text(bar.get_x() + bar.get_width()/2., height + 0.01,
+                                   f'{height:.2f}', ha='center', va='bottom')
+                        
+                        # Gráfico de pie para fuerzas de corte
+                        tipos_corte = ['Punzonamiento', 'Flexión']
+                        valores_corte = [resultados_zapata['Vc_punzonamiento'], resultados_zapata['Vc_flexion']]
+                        colors_corte = ['#FF6B6B', '#4ECDC4']
+                        
+                        ax2.pie(valores_corte, labels=tipos_corte, autopct='%1.1f%%', colors=colors_corte)
+                        ax2.set_title("Distribución de Resistencia al Corte")
+                        
+                        plt.tight_layout()
+                        st.pyplot(fig)
+                        
+                    except Exception as e:
+                        st.info(f"📊 Gráfico no disponible: {str(e)}")
+                else:
+                    st.info("📊 Gráficos no disponibles - Instale plotly o matplotlib")
 
     elif opcion == "🔧 Diseño de Vigas":
         st.title("🔧 Diseño de Vigas")
@@ -2925,6 +3012,141 @@ Plan: Gratuito
                     st.success("✅ Cuantía de acero dentro de límites")
                 else:
                     st.warning("⚠️ Cuantía de acero fuera de límites - Revisar diseño")
+                
+                # Gráficos de resultados
+                st.subheader("📈 Gráficos de Resultados")
+                
+                # Gráfico 1: Propiedades de la viga
+                if PLOTLY_AVAILABLE:
+                    datos_viga = pd.DataFrame({
+                        'Propiedad': ['Área Acero (cm²)', 'Prof. Bloque (cm)', 'Momento Resistente (kg·cm)', 'Corte Concreto (kg)'],
+                        'Valor': [resultados_viga['As'], resultados_viga['a'], 
+                                 resultados_viga['phiMn']/1000, resultados_viga['Vc']/1000]
+                    })
+                    
+                    fig1 = px.bar(datos_viga, x='Propiedad', y='Valor',
+                                title="Propiedades del Diseño de Viga",
+                                color='Propiedad',
+                                color_discrete_map={
+                                    'Área Acero (cm²)': '#2E8B57',
+                                    'Prof. Bloque (cm)': '#4169E1',
+                                    'Momento Resistente (kg·cm)': '#DC143C',
+                                    'Corte Concreto (kg)': '#FFD700'
+                                })
+                    
+                    fig1.update_layout(
+                        xaxis_title="Propiedad",
+                        yaxis_title="Valor",
+                        height=400
+                    )
+                    
+                    fig1.update_traces(texttemplate='%{y:.1f}', textposition='outside')
+                    st.plotly_chart(fig1, use_container_width=True)
+                
+                # Gráfico 2: Verificaciones
+                if PLOTLY_AVAILABLE:
+                    verificaciones = ['Momento', 'Corte']
+                    valores_verificacion = [1 if resultados_viga['verificacion_momento'] else 0, 
+                                           1 if resultados_viga['verificacion_corte'] else 0]
+                    colores_verificacion = ['#2E8B57' if v == 1 else '#DC143C' for v in valores_verificacion]
+                    
+                    fig2 = px.bar(x=verificaciones, y=valores_verificacion,
+                                title="Estado de Verificaciones",
+                                color=colores_verificacion,
+                                color_discrete_map={'#2E8B57': 'Cumple', '#DC143C': 'No Cumple'})
+                    
+                    fig2.update_layout(
+                        xaxis_title="Verificación",
+                        yaxis_title="Estado (1=Cumple, 0=No Cumple)",
+                        height=300,
+                        yaxis=dict(range=[0, 1.2])
+                    )
+                    
+                    st.plotly_chart(fig2, use_container_width=True)
+                
+                # Gráfico 3: Cuantías de acero
+                if PLOTLY_AVAILABLE:
+                    datos_cuantia = pd.DataFrame({
+                        'Tipo': ['Actual', 'Mínima', 'Máxima'],
+                        'Cuantía': [rho_actual, rho_min, rho_max]
+                    })
+                    
+                    fig3 = px.bar(datos_cuantia, x='Tipo', y='Cuantía',
+                                title="Cuantías de Acero",
+                                color='Tipo',
+                                color_discrete_map={
+                                    'Actual': '#2E8B57',
+                                    'Mínima': '#4169E1',
+                                    'Máxima': '#DC143C'
+                                })
+                    
+                    fig3.update_layout(
+                        xaxis_title="Tipo de Cuantía",
+                        yaxis_title="Valor",
+                        height=400
+                    )
+                    
+                    fig3.update_traces(texttemplate='%{y:.4f}', textposition='outside')
+                    st.plotly_chart(fig3, use_container_width=True)
+                
+                # Gráfico alternativo con matplotlib
+                elif MATPLOTLIB_AVAILABLE and plt is not None:
+                    try:
+                        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
+                        
+                        # Gráfico 1: Propiedades principales
+                        propiedades = ['As', 'a', 'φMn', 'Vc']
+                        valores = [resultados_viga['As'], resultados_viga['a'], 
+                                 resultados_viga['phiMn']/1000, resultados_viga['Vc']/1000]
+                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
+                        
+                        bars1 = ax1.bar(propiedades, valores, color=colors)
+                        ax1.set_title("Propiedades del Diseño de Viga")
+                        ax1.set_ylabel("Valor")
+                        
+                        for bar in bars1:
+                            height = bar.get_height()
+                            ax1.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                                   f'{height:.1f}', ha='center', va='bottom')
+                        
+                        # Gráfico 2: Verificaciones
+                        verificaciones = ['Momento', 'Corte']
+                        valores_verif = [1 if resultados_viga['verificacion_momento'] else 0, 
+                                        1 if resultados_viga['verificacion_corte'] else 0]
+                        colors_verif = ['#2E8B57' if v == 1 else '#DC143C' for v in valores_verif]
+                        
+                        bars2 = ax2.bar(verificaciones, valores_verif, color=colors_verif)
+                        ax2.set_title("Estado de Verificaciones")
+                        ax2.set_ylabel("Estado (1=Cumple, 0=No Cumple)")
+                        ax2.set_ylim(0, 1.2)
+                        
+                        # Gráfico 3: Cuantías
+                        tipos_cuantia = ['Actual', 'Mínima', 'Máxima']
+                        valores_cuantia = [rho_actual, rho_min, rho_max]
+                        colors_cuantia = ['#2E8B57', '#4169E1', '#DC143C']
+                        
+                        bars3 = ax3.bar(tipos_cuantia, valores_cuantia, color=colors_cuantia)
+                        ax3.set_title("Cuantías de Acero")
+                        ax3.set_ylabel("Valor")
+                        
+                        for bar in bars3:
+                            height = bar.get_height()
+                            ax3.text(bar.get_x() + bar.get_width()/2., height + 0.0001,
+                                   f'{height:.4f}', ha='center', va='bottom')
+                        
+                        # Gráfico 4: Espaciamiento de estribos
+                        ax4.pie([resultados_viga['s_estribos'], 60 - resultados_viga['s_estribos']], 
+                               labels=[f'Estribos\n{resultados_viga["s_estribos"]:.1f}cm', 'Espacio Libre'],
+                               autopct='%1.1f%%', colors=['#FF6B6B', '#4ECDC4'])
+                        ax4.set_title("Distribución de Estribos")
+                        
+                        plt.tight_layout()
+                        st.pyplot(fig)
+                        
+                    except Exception as e:
+                        st.info(f"📊 Gráfico no disponible: {str(e)}")
+                else:
+                    st.info("📊 Gráficos no disponibles - Instale plotly o matplotlib")
 
     elif opcion == "🏢 Diseño de Columnas":
         st.title("🏢 Diseño de Columnas")
@@ -3019,6 +3241,161 @@ Plan: Gratuito
                     st.success("✅ Columna segura")
                 else:
                     st.error("❌ Columna insegura - Aumentar dimensiones o acero")
+                
+                # Gráficos de resultados
+                st.subheader("📈 Gráficos de Resultados")
+                
+                # Gráfico 1: Propiedades de la columna
+                if PLOTLY_AVAILABLE:
+                    datos_columna = pd.DataFrame({
+                        'Propiedad': ['Resistencia Nominal (kg)', 'Resistencia Diseño (kg)', 'Factor φ', 'Espaciamiento Estribos (cm)'],
+                        'Valor': [resultados_columna['Pn']/1000, resultados_columna['phiPn']/1000, 
+                                 resultados_columna['phi'], resultados_columna['s_max_estribos']]
+                    })
+                    
+                    fig1 = px.bar(datos_columna, x='Propiedad', y='Valor',
+                                title="Propiedades del Diseño de Columna",
+                                color='Propiedad',
+                                color_discrete_map={
+                                    'Resistencia Nominal (kg)': '#2E8B57',
+                                    'Resistencia Diseño (kg)': '#4169E1',
+                                    'Factor φ': '#DC143C',
+                                    'Espaciamiento Estribos (cm)': '#FFD700'
+                                })
+                    
+                    fig1.update_layout(
+                        xaxis_title="Propiedad",
+                        yaxis_title="Valor",
+                        height=400
+                    )
+                    
+                    fig1.update_traces(texttemplate='%{y:.1f}', textposition='outside')
+                    st.plotly_chart(fig1, use_container_width=True)
+                
+                # Gráfico 2: Cuantías de acero
+                if PLOTLY_AVAILABLE:
+                    datos_cuantia_col = pd.DataFrame({
+                        'Tipo': ['Actual', 'Mínima', 'Máxima'],
+                        'Cuantía': [resultados_columna['rho'], resultados_columna['rho_min'], resultados_columna['rho_max']]
+                    })
+                    
+                    fig2 = px.bar(datos_cuantia_col, x='Tipo', y='Cuantía',
+                                title="Cuantías de Acero en Columna",
+                                color='Tipo',
+                                color_discrete_map={
+                                    'Actual': '#2E8B57',
+                                    'Mínima': '#4169E1',
+                                    'Máxima': '#DC143C'
+                                })
+                    
+                    fig2.update_layout(
+                        xaxis_title="Tipo de Cuantía",
+                        yaxis_title="Valor",
+                        height=400
+                    )
+                    
+                    fig2.update_traces(texttemplate='%{y:.3f}', textposition='outside')
+                    st.plotly_chart(fig2, use_container_width=True)
+                
+                # Gráfico 3: Factor de seguridad
+                if PLOTLY_AVAILABLE:
+                    fig3 = px.pie(values=[FS_columna, 2.0 - FS_columna], 
+                                names=[f'Factor Seguridad\n{FS_columna:.2f}', 'Margen'],
+                                title="Factor de Seguridad de la Columna",
+                                color_discrete_map={
+                                    f'Factor Seguridad\n{FS_columna:.2f}': '#2E8B57' if FS_columna >= 1.0 else '#DC143C',
+                                    'Margen': '#FFD700'
+                                })
+                    
+                    fig3.update_traces(textposition='inside', textinfo='percent+label')
+                    st.plotly_chart(fig3, use_container_width=True)
+                
+                # Gráfico 4: Comparación de cargas
+                if PLOTLY_AVAILABLE:
+                    datos_cargas = pd.DataFrame({
+                        'Tipo de Carga': ['Carga Aplicada', 'Resistencia Diseño'],
+                        'Valor (kg)': [Pu_columna/1000, resultados_columna['phiPn']/1000]
+                    })
+                    
+                    fig4 = px.bar(datos_cargas, x='Tipo de Carga', y='Valor (kg)',
+                                title="Comparación de Cargas",
+                                color='Tipo de Carga',
+                                color_discrete_map={
+                                    'Carga Aplicada': '#DC143C',
+                                    'Resistencia Diseño': '#2E8B57'
+                                })
+                    
+                    fig4.update_layout(
+                        xaxis_title="Tipo de Carga",
+                        yaxis_title="Valor (ton)",
+                        height=400
+                    )
+                    
+                    fig4.update_traces(texttemplate='%{y:.1f}', textposition='outside')
+                    st.plotly_chart(fig4, use_container_width=True)
+                
+                # Gráfico alternativo con matplotlib
+                elif MATPLOTLIB_AVAILABLE and plt is not None:
+                    try:
+                        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
+                        
+                        # Gráfico 1: Propiedades principales
+                        propiedades = ['Pn', 'φPn', 'φ', 's_max']
+                        valores = [resultados_columna['Pn']/1000, resultados_columna['phiPn']/1000, 
+                                 resultados_columna['phi'], resultados_columna['s_max_estribos']]
+                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
+                        
+                        bars1 = ax1.bar(propiedades, valores, color=colors)
+                        ax1.set_title("Propiedades del Diseño de Columna")
+                        ax1.set_ylabel("Valor")
+                        
+                        for bar in bars1:
+                            height = bar.get_height()
+                            ax1.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                                   f'{height:.1f}', ha='center', va='bottom')
+                        
+                        # Gráfico 2: Cuantías
+                        tipos_cuantia = ['Actual', 'Mínima', 'Máxima']
+                        valores_cuantia = [resultados_columna['rho'], resultados_columna['rho_min'], resultados_columna['rho_max']]
+                        colors_cuantia = ['#2E8B57', '#4169E1', '#DC143C']
+                        
+                        bars2 = ax2.bar(tipos_cuantia, valores_cuantia, color=colors_cuantia)
+                        ax2.set_title("Cuantías de Acero")
+                        ax2.set_ylabel("Valor")
+                        
+                        for bar in bars2:
+                            height = bar.get_height()
+                            ax2.text(bar.get_x() + bar.get_width()/2., height + 0.001,
+                                   f'{height:.3f}', ha='center', va='bottom')
+                        
+                        # Gráfico 3: Factor de seguridad
+                        ax3.pie([FS_columna, 2.0 - FS_columna], 
+                               labels=[f'Factor Seguridad\n{FS_columna:.2f}', 'Margen'],
+                               autopct='%1.1f%%', 
+                               colors=['#2E8B57' if FS_columna >= 1.0 else '#DC143C', '#FFD700'])
+                        ax3.set_title("Factor de Seguridad")
+                        
+                        # Gráfico 4: Comparación de cargas
+                        tipos_carga = ['Carga Aplicada', 'Resistencia Diseño']
+                        valores_carga = [Pu_columna/1000, resultados_columna['phiPn']/1000]
+                        colors_carga = ['#DC143C', '#2E8B57']
+                        
+                        bars4 = ax4.bar(tipos_carga, valores_carga, color=colors_carga)
+                        ax4.set_title("Comparación de Cargas")
+                        ax4.set_ylabel("Valor (ton)")
+                        
+                        for bar in bars4:
+                            height = bar.get_height()
+                            ax4.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                                   f'{height:.1f}', ha='center', va='bottom')
+                        
+                        plt.tight_layout()
+                        st.pyplot(fig)
+                        
+                    except Exception as e:
+                        st.info(f"📊 Gráfico no disponible: {str(e)}")
+                else:
+                    st.info("📊 Gráficos no disponibles - Instale plotly o matplotlib")
 
     elif opcion == "✂️ Ejercicio Básico de Corte":
         st.title("✂️ Ejercicio Básico de Corte")
@@ -3122,6 +3499,154 @@ Plan: Gratuito
                     st.info("📋 Estribos mínimos:")
                     st.write("- Espaciamiento máximo: d/2 o 60cm")
                     st.write("- Diámetro mínimo: φ3/8\"")
+                
+                # Gráficos de resultados
+                st.subheader("📈 Gráficos de Resultados")
+                
+                # Gráfico 1: Propiedades de corte
+                if PLOTLY_AVAILABLE:
+                    datos_corte = pd.DataFrame({
+                        'Propiedad': ['φVc (kg)', 'Vs Requerido (kg)', 'Espaciamiento (cm)', 'Av,min (cm²/cm)'],
+                        'Valor': [resultados_corte['phiVc']/1000, resultados_corte['Vs_requerido']/1000, 
+                                 resultados_corte['s_estribos'], resultados_corte['Av_min']]
+                    })
+                    
+                    fig1 = px.bar(datos_corte, x='Propiedad', y='Valor',
+                                title="Propiedades del Ejercicio de Corte",
+                                color='Propiedad',
+                                color_discrete_map={
+                                    'φVc (kg)': '#2E8B57',
+                                    'Vs Requerido (kg)': '#4169E1',
+                                    'Espaciamiento (cm)': '#DC143C',
+                                    'Av,min (cm²/cm)': '#FFD700'
+                                })
+                    
+                    fig1.update_layout(
+                        xaxis_title="Propiedad",
+                        yaxis_title="Valor",
+                        height=400
+                    )
+                    
+                    fig1.update_traces(texttemplate='%{y:.2f}', textposition='outside')
+                    st.plotly_chart(fig1, use_container_width=True)
+                
+                # Gráfico 2: Comparación con valores del PDF
+                if PLOTLY_AVAILABLE:
+                    datos_comparacion_pdf = pd.DataFrame({
+                        'Fuente': ['Cálculo Actual', 'Valor del PDF'],
+                        'φVc (ton)': [resultados_corte['phiVc']/1000, 8.86]
+                    })
+                    
+                    fig2 = px.bar(datos_comparacion_pdf, x='Fuente', y='φVc (ton)',
+                                title="Comparación con Valores del PDF",
+                                color='Fuente',
+                                color_discrete_map={
+                                    'Cálculo Actual': '#2E8B57',
+                                    'Valor del PDF': '#4169E1'
+                                })
+                    
+                    fig2.update_layout(
+                        xaxis_title="Fuente",
+                        yaxis_title="φVc (ton)",
+                        height=400
+                    )
+                    
+                    fig2.update_traces(texttemplate='%{y:.2f}', textposition='outside')
+                    st.plotly_chart(fig2, use_container_width=True)
+                
+                # Gráfico 3: Estado de la zona
+                if PLOTLY_AVAILABLE:
+                    estado_zona = 'Crítica' if resultados_corte['zona_critica'] else 'No Crítica'
+                    color_zona = '#DC143C' if resultados_corte['zona_critica'] else '#2E8B57'
+                    
+                    fig3 = px.pie(values=[1], names=[estado_zona],
+                                title="Estado de la Zona de Corte",
+                                color_discrete_map={estado_zona: color_zona})
+                    
+                    fig3.update_traces(textposition='inside', textinfo='label+percent')
+                    st.plotly_chart(fig3, use_container_width=True)
+                
+                # Gráfico 4: Factor de seguridad
+                if PLOTLY_AVAILABLE:
+                    FS_corte = Vu_corte / resultados_corte['phiVc']
+                    datos_fs = pd.DataFrame({
+                        'Tipo': ['Factor de Seguridad'],
+                        'Valor': [FS_corte]
+                    })
+                    
+                    fig4 = px.bar(datos_fs, x='Tipo', y='Valor',
+                                title="Factor de Seguridad",
+                                color='Tipo',
+                                color_discrete_map={'Factor de Seguridad': '#2E8B57' if FS_corte >= 1.0 else '#DC143C'})
+                    
+                    fig4.update_layout(
+                        xaxis_title="Tipo",
+                        yaxis_title="Valor",
+                        height=300
+                    )
+                    
+                    fig4.update_traces(texttemplate='%{y:.2f}', textposition='outside')
+                    fig4.add_hline(y=1.0, line_dash="dash", line_color="red", annotation_text="Límite de Seguridad")
+                    st.plotly_chart(fig4, use_container_width=True)
+                
+                # Gráfico alternativo con matplotlib
+                elif MATPLOTLIB_AVAILABLE and plt is not None:
+                    try:
+                        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
+                        
+                        # Gráfico 1: Propiedades principales
+                        propiedades = ['φVc', 'Vs', 's', 'Av,min']
+                        valores = [resultados_corte['phiVc']/1000, resultados_corte['Vs_requerido']/1000, 
+                                 resultados_corte['s_estribos'], resultados_corte['Av_min']]
+                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
+                        
+                        bars1 = ax1.bar(propiedades, valores, color=colors)
+                        ax1.set_title("Propiedades del Ejercicio de Corte")
+                        ax1.set_ylabel("Valor")
+                        
+                        for bar in bars1:
+                            height = bar.get_height()
+                            ax1.text(bar.get_x() + bar.get_width()/2., height + 0.01,
+                                   f'{height:.2f}', ha='center', va='bottom')
+                        
+                        # Gráfico 2: Comparación con PDF
+                        fuentes = ['Cálculo Actual', 'Valor del PDF']
+                        valores_pdf = [resultados_corte['phiVc']/1000, 8.86]
+                        colors_pdf = ['#2E8B57', '#4169E1']
+                        
+                        bars2 = ax2.bar(fuentes, valores_pdf, color=colors_pdf)
+                        ax2.set_title("Comparación con Valores del PDF")
+                        ax2.set_ylabel("φVc (ton)")
+                        
+                        for bar in bars2:
+                            height = bar.get_height()
+                            ax2.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                                   f'{height:.2f}', ha='center', va='bottom')
+                        
+                        # Gráfico 3: Estado de la zona
+                        estado_zona = 'Crítica' if resultados_corte['zona_critica'] else 'No Crítica'
+                        color_zona = '#DC143C' if resultados_corte['zona_critica'] else '#2E8B57'
+                        
+                        ax3.pie([1], labels=[estado_zona], autopct='%1.1f%%', colors=[color_zona])
+                        ax3.set_title("Estado de la Zona de Corte")
+                        
+                        # Gráfico 4: Factor de seguridad
+                        FS_corte = Vu_corte / resultados_corte['phiVc']
+                        ax4.bar(['Factor de Seguridad'], [FS_corte], 
+                               color='#2E8B57' if FS_corte >= 1.0 else '#DC143C')
+                        ax4.set_title("Factor de Seguridad")
+                        ax4.set_ylabel("Valor")
+                        ax4.axhline(y=1.0, color='red', linestyle='--', label='Límite de Seguridad')
+                        ax4.text(0, FS_corte + 0.05, f'{FS_corte:.2f}', ha='center', va='bottom')
+                        ax4.legend()
+                        
+                        plt.tight_layout()
+                        st.pyplot(fig)
+                        
+                    except Exception as e:
+                        st.info(f"📊 Gráfico no disponible: {str(e)}")
+                else:
+                    st.info("📊 Gráficos no disponibles - Instale plotly o matplotlib")
 
     elif opcion == "📈 Gráficos":
         st.title("📈 Gráficos y Visualizaciones")
