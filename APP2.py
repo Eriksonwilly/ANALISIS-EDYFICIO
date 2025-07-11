@@ -10,6 +10,16 @@ import tempfile
 import os
 
 # =====================
+# CONFIGURACIÓN DE PÁGINA STREAMLIT
+# =====================
+st.set_page_config(
+    page_title="CONSORCIO DEJ - Análisis Estructural",
+    page_icon="🏗️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# =====================
 # IMPORTACIONES DE GRÁFICOS (DIRECTAS COMO EN APP1.PY)
 # =====================
 
@@ -21,7 +31,11 @@ Polygon = None
 
 try:
     import matplotlib
-    matplotlib.use('Agg')  # Backend no interactivo para Streamlit
+    # Configurar backend de manera más robusta
+    try:
+        matplotlib.use('Agg')  # Backend no interactivo para Streamlit
+    except:
+        pass  # Si falla, continuar con el backend por defecto
     import matplotlib.pyplot as plt
     from matplotlib.patches import Rectangle, Polygon
     MATPLOTLIB_AVAILABLE = True
@@ -51,6 +65,33 @@ except ImportError:
 
 # Sistema de pagos simple (simulado)
 PAYMENT_SYSTEM_AVAILABLE = False
+
+# Simulación del sistema de pagos para evitar errores
+class PaymentSystem:
+    def __init__(self):
+        self.users = {}
+    
+    def login_user(self, username, password):
+        if username == "admin" and password == "admin123":
+            return {
+                "success": True,
+                "user": {"username": "admin", "plan": "empresarial", "name": "Administrador", "email": "admin"}
+            }
+        elif username == "demo" and password == "demo":
+            return {
+                "success": True,
+                "user": {"username": "demo", "plan": "gratuito", "name": "Usuario Demo", "email": "demo"}
+            }
+        return {"success": False, "message": "Credenciales inválidas"}
+    
+    def register_user(self, email, password, username):
+        return {"success": True, "message": "Usuario registrado exitosamente (modo demo)"}
+    
+    def upgrade_plan(self, user_id, plan):
+        return {"success": True, "message": f"Plan actualizado a {plan} (modo demo)"}
+
+# Instanciar el sistema de pagos simulado
+payment_system = PaymentSystem()
 
 # Variables globales para compatibilidad
 # MATPLOTLIB_AVAILABLE se define en el bloque try/except de arriba
