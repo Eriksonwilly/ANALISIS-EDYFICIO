@@ -423,6 +423,10 @@ def graficar_cortantes_momentos_mccormac(L, w, P=None, a=None, tipo_viga="simple
     """
     Genera gráficos de cortantes y momentos según Jack C. McCormac
     """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        st.warning("⚠️ Matplotlib no está disponible. No se puede generar el gráfico.")
+        return None
+        
     try:
         if tipo_viga == "simple":
             x, V, M = calcular_cortantes_momentos_viga_simple_mccormac(L, w, P, a)
@@ -471,6 +475,10 @@ def graficar_viga_continua_mccormac(L1, L2, w1, w2):
     """
     Genera gráficos de cortantes y momentos para viga continua según McCormac
     """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        st.warning("⚠️ Matplotlib no está disponible. No se puede generar el gráfico.")
+        return None
+        
     try:
         x1, V1, M1, x2, V2, M2, R_A, R_B1, R_B2, R_C, M_B = calcular_cortantes_momentos_viga_continua_mccormac(L1, L2, w1, w2)
         
@@ -1173,6 +1181,218 @@ def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200):
         'Av_min': Av_min,
         'verificacion': Vu <= phiVc + Vs_requerido
     }
+
+# =====================
+# FUNCIONES PARA DIBUJAR ELEMENTOS ESTRUCTURALES
+# =====================
+
+def dibujar_viga(b, d, L, As, s_estribos, fc, fy):
+    """
+    Dibuja una viga con sus dimensiones y refuerzo
+    """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        return None
+        
+    try:
+        fig, ax = plt.subplots(figsize=(12, 8))
+        
+        # Escala para visualización
+        escala = 100  # 1 unidad = 1 cm
+        
+        # Dimensiones de la viga
+        ancho = b / escala
+        alto = d / escala
+        largo = L
+        
+        # Dibujar viga
+        rect_viga = Rectangle((0, 0), largo, alto, linewidth=2, edgecolor='black', facecolor='lightgray', alpha=0.7)
+        ax.add_patch(rect_viga)
+        
+        # Dibujar acero longitudinal (simplificado como líneas)
+        num_barras = max(2, int(As / 2.85))  # Asumiendo barras #6 (2.85 cm²)
+        espaciado_barras = ancho / (num_barras + 1)
+        
+        # Acero superior
+        for i in range(num_barras):
+            x = espaciado_barras * (i + 1)
+            ax.plot([x, x], [alto - 0.05, alto - 0.15], 'red', linewidth=3, label='Acero Superior' if i == 0 else "")
+        
+        # Acero inferior
+        for i in range(num_barras):
+            x = espaciado_barras * (i + 1)
+            ax.plot([x, x], [0.05, 0.15], 'red', linewidth=3, label='Acero Inferior' if i == 0 else "")
+        
+        # Dibujar estribos (simplificado)
+        num_estribos = int(L / (s_estribos / escala))
+        for i in range(num_estribos):
+            x = (L / num_estribos) * i
+            rect_estribo = Rectangle((x, 0), 0.1, alto, linewidth=1, edgecolor='blue', facecolor='none', linestyle='--')
+            ax.add_patch(rect_estribo)
+        
+        # Configurar gráfico
+        ax.set_xlim(-0.5, largo + 0.5)
+        ax.set_ylim(-0.5, alto + 0.5)
+        ax.set_aspect('equal')
+        ax.set_title(f'Viga de {b}×{d} cm - L = {L} m\nAcero: {As:.1f} cm² - Estribos: φ3/8"@{s_estribos:.1f}cm', fontsize=12, fontweight='bold')
+        ax.set_xlabel('Longitud (m)')
+        ax.set_ylabel('Altura (m)')
+        ax.grid(True, alpha=0.3)
+        
+        # Agregar leyenda
+        handles, labels = ax.get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        ax.legend(by_label.values(), by_label.keys(), loc='upper right')
+        
+        # Agregar anotaciones
+        ax.text(largo/2, alto/2, f'f\'c = {fc} kg/cm²\nfy = {fy} kg/cm²', 
+                ha='center', va='center', bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7))
+        
+        plt.tight_layout()
+        return fig
+        
+    except Exception as e:
+        st.error(f"Error dibujando viga: {str(e)}")
+        return None
+
+def dibujar_columna(lado, Ast, fc, fy):
+    """
+    Dibuja una columna con sus dimensiones y refuerzo
+    """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        return None
+        
+    try:
+        fig, ax = plt.subplots(figsize=(8, 8))
+        
+        # Escala para visualización
+        escala = 100  # 1 unidad = 1 cm
+        
+        # Dimensiones de la columna
+        ancho = lado / escala
+        alto = lado / escala
+        
+        # Dibujar columna
+        rect_columna = Rectangle((0, 0), ancho, alto, linewidth=2, edgecolor='black', facecolor='lightgray', alpha=0.7)
+        ax.add_patch(rect_columna)
+        
+        # Dibujar acero longitudinal (simplificado como círculos)
+        num_barras = max(4, int(Ast / 2.85))  # Mínimo 4 barras
+        espaciado = ancho / 3
+        
+        # Posiciones de las barras
+        posiciones = [
+            (espaciado, alto - espaciado),  # Esquina superior derecha
+            (ancho - espaciado, alto - espaciado),  # Esquina superior izquierda
+            (espaciado, espaciado),  # Esquina inferior derecha
+            (ancho - espaciado, espaciado),  # Esquina inferior izquierda
+        ]
+        
+        # Agregar barras adicionales si es necesario
+        if num_barras > 4:
+            for i in range(num_barras - 4):
+                x = espaciado + (i % 2) * espaciado
+                y = espaciado + (i // 2) * espaciado
+                posiciones.append((x, y))
+        
+        # Dibujar barras
+        for i, (x, y) in enumerate(posiciones[:num_barras]):
+            circulo = plt.Circle((x, y), 0.02, color='red', label='Acero Longitudinal' if i == 0 else "")
+            ax.add_patch(circulo)
+        
+        # Dibujar estribos (simplificado)
+        rect_estribo = Rectangle((0.05, 0.05), ancho - 0.1, alto - 0.1, 
+                               linewidth=1, edgecolor='blue', facecolor='none', linestyle='--')
+        ax.add_patch(rect_estribo)
+        
+        # Configurar gráfico
+        ax.set_xlim(-0.1, ancho + 0.1)
+        ax.set_ylim(-0.1, alto + 0.1)
+        ax.set_aspect('equal')
+        ax.set_title(f'Columna {lado}×{lado} cm\nAcero: {Ast:.1f} cm²', fontsize=12, fontweight='bold')
+        ax.set_xlabel('Ancho (m)')
+        ax.set_ylabel('Alto (m)')
+        ax.grid(True, alpha=0.3)
+        
+        # Agregar leyenda
+        handles, labels = ax.get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        ax.legend(by_label.values(), by_label.keys(), loc='upper right')
+        
+        # Agregar anotaciones
+        ax.text(ancho/2, alto/2, f'f\'c = {fc} kg/cm²\nfy = {fy} kg/cm²\nρ = {Ast/(lado*lado)*100:.1f}%', 
+                ha='center', va='center', bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7))
+        
+        plt.tight_layout()
+        return fig
+        
+    except Exception as e:
+        st.error(f"Error dibujando columna: {str(e)}")
+        return None
+
+def dibujar_zapata(lado, d, fc, fy):
+    """
+    Dibuja una zapata con sus dimensiones
+    """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        return None
+        
+    try:
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Escala para visualización
+        escala = 100  # 1 unidad = 1 cm
+        
+        # Dimensiones de la zapata
+        ancho = lado / escala
+        alto = lado / escala
+        peralte = d / escala
+        
+        # Dibujar zapata
+        rect_zapata = Rectangle((0, 0), ancho, alto, linewidth=2, edgecolor='black', facecolor='lightbrown', alpha=0.7)
+        ax.add_patch(rect_zapata)
+        
+        # Dibujar columna (simplificado)
+        lado_columna = 0.25  # 25 cm
+        x_col = (ancho - lado_columna) / 2
+        y_col = (alto - lado_columna) / 2
+        rect_columna = Rectangle((x_col, y_col), lado_columna, lado_columna, 
+                               linewidth=2, edgecolor='red', facecolor='red', alpha=0.5)
+        ax.add_patch(rect_columna)
+        
+        # Dibujar refuerzo (simplificado como líneas)
+        espaciado_refuerzo = 0.2
+        for i in range(int(ancho / espaciado_refuerzo)):
+            x = espaciado_refuerzo * i
+            ax.plot([x, x], [0.05, alto - 0.05], 'blue', linewidth=2, alpha=0.7)
+        
+        for i in range(int(alto / espaciado_refuerzo)):
+            y = espaciado_refuerzo * i
+            ax.plot([0.05, ancho - 0.05], [y, y], 'blue', linewidth=2, alpha=0.7)
+        
+        # Configurar gráfico
+        ax.set_xlim(-0.1, ancho + 0.1)
+        ax.set_ylim(-0.1, alto + 0.1)
+        ax.set_aspect('equal')
+        ax.set_title(f'Zapata {lado}×{lado} cm - Peralte: {d} cm', fontsize=12, fontweight='bold')
+        ax.set_xlabel('Ancho (m)')
+        ax.set_ylabel('Largo (m)')
+        ax.grid(True, alpha=0.3)
+        
+        # Agregar anotaciones
+        ax.text(ancho/2, alto/2, f'f\'c = {fc} kg/cm²\nfy = {fy} kg/cm²\nPeralte = {d} cm', 
+                ha='center', va='center', bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7))
+        
+        # Agregar leyenda
+        ax.text(0.02, alto - 0.1, 'Zapata', bbox=dict(boxstyle="round,pad=0.3", facecolor="lightbrown", alpha=0.7))
+        ax.text(x_col + lado_columna/2, y_col + lado_columna/2, 'Columna', 
+                ha='center', va='center', color='white', fontweight='bold')
+        
+        plt.tight_layout()
+        return fig
+        
+    except Exception as e:
+        st.error(f"Error dibujando zapata: {str(e)}")
+        return None
 
 # =====================
 # FUNCIONES DE CÁLCULO
@@ -2911,6 +3131,33 @@ Plan: Gratuito
                         st.info(f"📊 Gráfico no disponible: {str(e)}")
                 else:
                     st.info("📊 Gráficos no disponibles - Instale plotly o matplotlib")
+                
+                # Gráfico de cortantes y momentos según McCormac
+                st.subheader("📊 Diagramas de Cortantes y Momentos (McCormac)")
+                
+                # Generar gráfico de viga simplemente apoyada para la zapata
+                L_zapata = resultados_zapata['lado_zapata'] / 100  # Convertir a metros
+                w_zapata = Pu_zapata / L_zapata  # Carga distribuida equivalente
+                
+                fig_mccormac = graficar_cortantes_momentos_mccormac(L_zapata, w_zapata, None, None, "simple")
+                if fig_mccormac:
+                    st.pyplot(fig_mccormac)
+                    
+                    # Mostrar valores máximos
+                    x, V, M = calcular_cortantes_momentos_viga_simple_mccormac(L_zapata, w_zapata, None, None)
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Cortante Máximo", f"{max(abs(V)):.0f} kg")
+                    with col2:
+                        st.metric("Momento Máximo", f"{max(abs(M)):.0f} kg·m")
+                    with col3:
+                        st.metric("Luz de la Zapata", f"{L_zapata:.2f} m")
+                
+                # Dibujo de la zapata
+                st.subheader("🏗️ Dibujo de la Zapata")
+                fig_zapata = dibujar_zapata(resultados_zapata['lado_zapata'], resultados_zapata['d_estimado'], fc_zapata, fy_zapata)
+                if fig_zapata:
+                    st.pyplot(fig_zapata)
 
     elif opcion == "🔧 Diseño de Vigas":
         st.title("🔧 Diseño de Vigas")
@@ -3147,6 +3394,33 @@ Plan: Gratuito
                         st.info(f"📊 Gráfico no disponible: {str(e)}")
                 else:
                     st.info("📊 Gráficos no disponibles - Instale plotly o matplotlib")
+                
+                # Gráfico de cortantes y momentos según McCormac
+                st.subheader("📊 Diagramas de Cortantes y Momentos (McCormac)")
+                
+                # Generar gráfico de viga con los datos calculados
+                L_viga_mccormac = 6.0  # Luz típica de viga
+                w_viga_mccormac = Vu_viga / L_viga_mccormac  # Carga distribuida equivalente
+                
+                fig_mccormac = graficar_cortantes_momentos_mccormac(L_viga_mccormac, w_viga_mccormac, None, None, "simple")
+                if fig_mccormac:
+                    st.pyplot(fig_mccormac)
+                    
+                    # Mostrar valores máximos
+                    x, V, M = calcular_cortantes_momentos_viga_simple_mccormac(L_viga_mccormac, w_viga_mccormac, None, None)
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Cortante Máximo", f"{max(abs(V)):.0f} kg")
+                    with col2:
+                        st.metric("Momento Máximo", f"{max(abs(M)):.0f} kg·m")
+                    with col3:
+                        st.metric("Luz de la Viga", f"{L_viga_mccormac} m")
+                
+                # Dibujo de la viga
+                st.subheader("🔧 Dibujo de la Viga")
+                fig_viga = dibujar_viga(b_viga, d_viga, L_viga_mccormac, resultados_viga['As'], resultados_viga['s_estribos'], fc_viga, fy_viga)
+                if fig_viga:
+                    st.pyplot(fig_viga)
 
     elif opcion == "🏢 Diseño de Columnas":
         st.title("🏢 Diseño de Columnas")
@@ -3396,6 +3670,33 @@ Plan: Gratuito
                         st.info(f"📊 Gráfico no disponible: {str(e)}")
                 else:
                     st.info("📊 Gráficos no disponibles - Instale plotly o matplotlib")
+                
+                # Gráfico de cortantes y momentos según McCormac
+                st.subheader("📊 Diagramas de Cortantes y Momentos (McCormac)")
+                
+                # Generar gráfico de viga con los datos de la columna
+                L_columna_mccormac = 3.0  # Altura típica de piso
+                w_columna_mccormac = Pu_columna / L_columna_mccormac  # Carga distribuida equivalente
+                
+                fig_mccormac = graficar_cortantes_momentos_mccormac(L_columna_mccormac, w_columna_mccormac, None, None, "empotrada")
+                if fig_mccormac:
+                    st.pyplot(fig_mccormac)
+                    
+                    # Mostrar valores máximos
+                    x, V, M = calcular_cortantes_momentos_viga_empotrada_mccormac(L_columna_mccormac, w_columna_mccormac, None, None)
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Cortante Máximo", f"{max(abs(V)):.0f} kg")
+                    with col2:
+                        st.metric("Momento Máximo", f"{max(abs(M)):.0f} kg·m")
+                    with col3:
+                        st.metric("Altura de Piso", f"{L_columna_mccormac} m")
+                
+                # Dibujo de la columna
+                st.subheader("🏢 Dibujo de la Columna")
+                fig_columna = dibujar_columna(lado_columna, Ast_columna, fc_columna, fy_columna)
+                if fig_columna:
+                    st.pyplot(fig_columna)
 
     elif opcion == "✂️ Ejercicio Básico de Corte":
         st.title("✂️ Ejercicio Básico de Corte")
@@ -3596,6 +3897,33 @@ Plan: Gratuito
                         
                         # Gráfico 1: Propiedades principales
                         propiedades = ['φVc', 'Vs', 's', 'Av,min']
+                        
+                # Gráfico de cortantes y momentos según McCormac
+                st.subheader("📊 Diagramas de Cortantes y Momentos (McCormac)")
+                
+                # Generar gráfico de viga con los datos de corte
+                L_corte_mccormac = 4.0  # Luz típica
+                w_corte_mccormac = Vu_corte / L_corte_mccormac  # Carga distribuida equivalente
+                
+                fig_mccormac = graficar_cortantes_momentos_mccormac(L_corte_mccormac, w_corte_mccormac, None, None, "simple")
+                if fig_mccormac:
+                    st.pyplot(fig_mccormac)
+                    
+                    # Mostrar valores máximos
+                    x, V, M = calcular_cortantes_momentos_viga_simple_mccormac(L_corte_mccormac, w_corte_mccormac, None, None)
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Cortante Máximo", f"{max(abs(V)):.0f} kg")
+                    with col2:
+                        st.metric("Momento Máximo", f"{max(abs(M)):.0f} kg·m")
+                    with col3:
+                        st.metric("Luz del Elemento", f"{L_corte_mccormac} m")
+                
+                # Dibujo de la viga de corte
+                st.subheader("✂️ Dibujo del Elemento a Corte")
+                fig_corte = dibujar_viga(b_corte, d_corte, L_corte_mccormac, 0, resultados_corte['s_estribos'], fc_corte, fy_corte)
+                if fig_corte:
+                    st.pyplot(fig_corte)
                         valores = [resultados_corte['phiVc']/1000, resultados_corte['Vs_requerido']/1000, 
                                  resultados_corte['s_estribos'], resultados_corte['Av_min']]
                         colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
