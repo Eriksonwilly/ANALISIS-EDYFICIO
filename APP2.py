@@ -995,6 +995,178 @@ Generado por: CONSORCIO DEJ
     return pdf_buffer
 
 # =====================
+# FUNCIONES DE CÁLCULO PARA DISEÑO ESTRUCTURAL
+# =====================
+
+def calcular_diseno_zapatas(fc, fy, Pu, qu, FS=3):
+    """
+    Calcula el diseño de zapatas según E.060 y ACI 318
+    """
+    # Capacidad portante del suelo
+    qn = qu / FS
+    
+    # Área de la zapata (estimación inicial)
+    A_estimada = Pu / qn
+    
+    # Dimensiones típicas (asumiendo zapata cuadrada)
+    lado_zapata = sqrt(A_estimada)
+    
+    # Peralte efectivo estimado (d = L/8 a L/12)
+    d_estimado = lado_zapata / 10
+    
+    # Perímetro crítico para punzonamiento
+    b0 = 4 * (25 + d_estimado)  # Asumiendo columna de 25x25 cm
+    
+    # Corte por punzonamiento
+    Vc_punzonamiento = 0.53 * sqrt(fc) * b0 * d_estimado
+    
+    # Corte por flexión
+    Vc_flexion = 0.53 * sqrt(fc) * lado_zapata * d_estimado
+    
+    # Momento último en la zapata
+    Mu_zapata = (Pu / lado_zapata) * (lado_zapata - 0.25)**2 / 8  # Momento en la cara de la columna
+    
+    # Refuerzo por flexión
+    j = 0.9
+    phi = 0.9
+    As_flexion = Mu_zapata / (phi * fy * j * d_estimado)
+    
+    return {
+        'qn': qn,
+        'A_estimada': A_estimada,
+        'lado_zapata': lado_zapata,
+        'd_estimado': d_estimado,
+        'Vc_punzonamiento': Vc_punzonamiento,
+        'Vc_flexion': Vc_flexion,
+        'Mu_zapata': Mu_zapata,
+        'As_flexion': As_flexion,
+        'b0': b0
+    }
+
+def calcular_diseno_vigas_detallado(fc, fy, b, d, Mu, Vu):
+    """
+    Calcula el diseño detallado de vigas según ACI 318
+    """
+    # Momento resistente
+    # Asumir cuantía inicial
+    rho = 0.01  # 1% inicial
+    As = rho * b * d
+    
+    # Profundidad del bloque equivalente
+    a = As * fy / (0.85 * fc * b)
+    
+    # Momento resistente
+    Mn = As * fy * (d - a/2)
+    phi = 0.9
+    phiMn = phi * Mn
+    
+    # Corte resistente del concreto
+    Vc = 0.53 * sqrt(fc) * b * d
+    
+    # Refuerzo por corte
+    phi_corte = 0.75
+    if Vu > phi_corte * Vc:
+        Vs = (Vu - phi_corte * Vc) / phi_corte
+        # Asumir estribos #3 (Av = 0.71 cm²)
+        Av = 0.71
+        s = Av * fy * d / Vs
+        s_max = min(d/2, 60)  # cm
+        s_final = min(s, s_max)
+    else:
+        Vs = 0
+        s_final = min(d/2, 60)
+    
+    return {
+        'As': As,
+        'a': a,
+        'Mn': Mn,
+        'phiMn': phiMn,
+        'Vc': Vc,
+        'Vs': Vs,
+        's_estribos': s_final,
+        'verificacion_momento': phiMn >= Mu,
+        'verificacion_corte': Vu <= phi_corte * (Vc + Vs)
+    }
+
+def calcular_diseno_columnas_detallado(fc, fy, Ag, Ast, Pu, Mu=0):
+    """
+    Calcula el diseño detallado de columnas según ACI 318
+    """
+    # Carga axial resistente
+    Pn = 0.85 * fc * (Ag - Ast) + Ast * fy
+    
+    # Factor phi para columnas con estribos
+    phi = 0.65
+    
+    # Resistencia de diseño
+    phiPn = phi * Pn
+    
+    # Espaciamiento de estribos (asumiendo columna cuadrada)
+    lado_columna = sqrt(Ag)
+    db = 0.019  # Diámetro de barra #6 (3/4")
+    de = 0.0095  # Diámetro de estribo #3 (3/8")
+    
+    s_max = min(16 * db, 48 * de, lado_columna)
+    
+    # Verificación de cuantías
+    rho = Ast / Ag
+    rho_min = 0.01
+    rho_max = 0.06
+    
+    return {
+        'Pn': Pn,
+        'phiPn': phiPn,
+        'phi': phi,
+        's_max_estribos': s_max,
+        'rho': rho,
+        'rho_min': rho_min,
+        'rho_max': rho_max,
+        'verificacion_carga': Pu <= phiPn,
+        'verificacion_cuantia': rho_min <= rho <= rho_max
+    }
+
+def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200):
+    """
+    Calcula el ejercicio básico de corte según las fórmulas del PDF
+    """
+    # Corte resistente del concreto (φVc)
+    phiVc = 0.53 * sqrt(fc) * b * d
+    
+    # Verificar si se necesita refuerzo
+    if Vu > phiVc:
+        # Calcular Vs requerido
+        Vs_requerido = Vu - phiVc
+        
+        # Asumir estribos #3 (Av = 0.71 cm²)
+        Av = 0.71
+        
+        # Espaciamiento de estribos
+        s = Av * fy * d / Vs_requerido
+        
+        # Limitar espaciamiento
+        s_max = min(d/2, 60)  # cm
+        s_final = min(s, s_max)
+        
+        zona_critica = True
+    else:
+        # No se necesita refuerzo, usar espaciamiento máximo
+        s_final = min(d/2, 60)
+        Vs_requerido = 0
+        zona_critica = False
+    
+    # Refuerzo mínimo
+    Av_min = 0.2 * sqrt(fc) * b * s_final / fy
+    
+    return {
+        'phiVc': phiVc,
+        'Vs_requerido': Vs_requerido,
+        's_estribos': s_final,
+        'zona_critica': zona_critica,
+        'Av_min': Av_min,
+        'verificacion': Vu <= phiVc + Vs_requerido
+    }
+
+# =====================
 # FUNCIONES DE CÁLCULO
 # =====================
 def calcular_propiedades_concreto(fc):
@@ -1180,6 +1352,79 @@ st.set_page_config(
     page_icon="🏗️",
     layout="wide"
 )
+
+# Configurar PWA
+def configurar_pwa():
+    """Configurar PWA en Streamlit"""
+    
+    # Agregar meta tags para PWA
+    st.markdown('''
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#FFD700">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.svg">
+    </head>
+    ''', unsafe_allow_html=True)
+    
+    # Script de instalación PWA
+    st.markdown('''
+    <script>
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => console.log('✅ PWA registrada'))
+                .catch(error => console.log('❌ Error PWA:', error));
+        }
+        
+        // Detectar instalación
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar botón de instalación
+            const installBtn = document.createElement('button');
+            installBtn.innerHTML = '📱 Instalar App';
+            installBtn.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #FFD700;
+                color: #333;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 25px;
+                cursor: pointer;
+                z-index: 1000;
+                font-weight: bold;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            `;
+            
+            installBtn.onclick = async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('Usuario eligió:', outcome);
+                    deferredPrompt = null;
+                    installBtn.remove();
+                }
+            };
+            
+            document.body.appendChild(installBtn);
+        });
+        
+        // Detectar si está instalada
+        window.addEventListener('appinstalled', () => {
+            console.log('🎉 PWA instalada correctamente');
+        });
+    </script>
+    ''', unsafe_allow_html=True)
+
+# Configurar PWA al inicio
+configurar_pwa()
 
 # Verificar dependencias y mostrar warnings
 warnings = verificar_dependencias()
@@ -1443,6 +1688,30 @@ else:
         st.session_state['user'] = None
         st.session_state['plan'] = None
         st.rerun()
+    
+    # Mostrar estado de la PWA
+    def mostrar_estado_pwa():
+        """Mostrar estado de la PWA en el sidebar"""
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("📱 Estado PWA")
+        
+        import os
+        archivos_pwa = ['manifest.json', 'sw.js', 'offline.html']
+        archivos_ok = sum(1 for archivo in archivos_pwa if os.path.exists(archivo))
+        
+        if archivos_ok == len(archivos_pwa):
+            st.sidebar.success("✅ PWA configurada")
+        else:
+            st.sidebar.warning(f"⚠️ {len(archivos_pwa) - archivos_ok} archivos faltantes")
+        
+        if os.path.exists('icons'):
+            iconos = len([f for f in os.listdir('icons') if f.endswith('.svg')])
+            st.sidebar.info(f"🎨 {iconos} iconos generados")
+        else:
+            st.sidebar.error("❌ Iconos no encontrados")
+    
+    # Mostrar estado PWA
+    mostrar_estado_pwa()
 
     # Sidebar para navegación
     st.sidebar.title("📋 Menú Principal")
@@ -1469,7 +1738,7 @@ else:
         st.sidebar.success("Acceso completo a todas las funciones")
     
     opcion = st.sidebar.selectbox("Selecciona una opción", 
-                                 ["🏗️ Cálculo Básico", "📊 Análisis Completo", "📄 Generar Reporte", "📚 Fórmulas de Diseño Estructural", "📈 Gráficos", "ℹ️ Acerca de", "✉️ Contacto"])
+                                 ["🏗️ Cálculo Básico", "📊 Análisis Completo", "📄 Generar Reporte", "📚 Fórmulas de Diseño Estructural", "🏗️ Diseño de Zapatas", "🔧 Diseño de Vigas", "🏢 Diseño de Columnas", "✂️ Ejercicio Básico de Corte", "📈 Gráficos", "ℹ️ Acerca de", "✉️ Contacto"])
     
     # Panel especial para administrador
     is_admin = st.session_state.get('user') == 'admin'
@@ -2440,6 +2709,420 @@ Plan: Gratuito
             - "Diseño de Estructuras de Concreto Armado" – Antonio Blanco Blasco
             """, unsafe_allow_html=True)
 
+    elif opcion == "🏗️ Diseño de Zapatas":
+        st.title("🏗️ Diseño de Zapatas (Cimentaciones)")
+        st.info("📚 Basado en Norma E.060 y ACI 318 - Capítulo 11")
+        
+        # Verificar acceso basado en plan
+        if st.session_state['plan'] == "gratuito":
+            st.warning("⚠️ Esta función requiere plan premium. Actualiza tu cuenta para acceder al diseño de zapatas.")
+            st.info("Plan gratuito incluye: Cálculos básicos, resultados simples")
+            st.info("Plan premium incluye: Diseño completo de zapatas, verificaciones detalladas")
+            
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("⭐ Actualizar a Premium", type="primary", key="upgrade_zapatas"):
+                    st.session_state['show_pricing'] = True
+                    st.rerun()
+        else:
+            st.success("⭐ Plan Premium: Diseño completo de zapatas con todas las verificaciones")
+            
+            # Datos de entrada para zapatas
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("📐 Datos de Entrada")
+                fc_zapata = st.number_input("f'c (kg/cm²)", 175, 700, 210, 10, key="fc_zapata")
+                fy_zapata = st.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, key="fy_zapata")
+                Pu_zapata = st.number_input("Carga Axial Última Pu (kg)", 10000, 1000000, 100000, 1000, key="Pu_zapata")
+                qu_zapata = st.number_input("Capacidad Última del Suelo qu (kg/cm²)", 1.0, 50.0, 3.0, 0.1, key="qu_zapata")
+                FS_zapata = st.number_input("Factor de Seguridad FS", 2.0, 5.0, 3.0, 0.1, key="FS_zapata")
+            
+            with col2:
+                st.subheader("📋 Fórmulas Utilizadas")
+                st.markdown("""
+                **Capacidad Portante del Suelo:**
+                \[ q_n = \frac{q_u}{FS} \]
+                
+                **Área de la Zapata:**
+                \[ A = \frac{P}{q_n} \]
+                
+                **Corte por Punzonamiento:**
+                \[ V_c = 0.53\sqrt{f'_c} \cdot b_0 \cdot d \]
+                
+                **Corte por Flexión:**
+                \[ V_c = 0.53\sqrt{f'_c} \cdot b \cdot d \]
+                
+                **Refuerzo por Flexión:**
+                \[ A_s = \frac{M_u}{\phi \cdot f_y \cdot j \cdot d} \]
+                """, unsafe_allow_html=True)
+            
+            # Botón para calcular
+            if st.button("🔬 Calcular Diseño de Zapata", type="primary"):
+                # Cálculos de diseño de zapata
+                resultados_zapata = calcular_diseno_zapatas(fc_zapata, fy_zapata, Pu_zapata, qu_zapata, FS_zapata)
+                
+                st.success("¡Diseño de zapata calculado exitosamente!")
+                st.balloons()
+                
+                # Mostrar resultados
+                st.subheader("📊 Resultados del Diseño de Zapata")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.metric("Capacidad Portante (qn)", f"{resultados_zapata['qn']:.2f} kg/cm²")
+                    st.metric("Área Estimada", f"{resultados_zapata['A_estimada']:.2f} cm²")
+                    st.metric("Lado de Zapata", f"{resultados_zapata['lado_zapata']:.1f} cm")
+                    st.metric("Peralte Efectivo", f"{resultados_zapata['d_estimado']:.1f} cm")
+                
+                with col2:
+                    st.metric("Corte Punzonamiento", f"{resultados_zapata['Vc_punzonamiento']:.0f} kg")
+                    st.metric("Corte Flexión", f"{resultados_zapata['Vc_flexion']:.0f} kg")
+                    st.metric("Momento Zapata", f"{resultados_zapata['Mu_zapata']:.0f} kg·cm")
+                    st.metric("Acero Flexión", f"{resultados_zapata['As_flexion']:.1f} cm²")
+                
+                # Verificaciones
+                st.subheader("🔍 Verificaciones de Diseño")
+                
+                # Verificación de capacidad portante
+                if resultados_zapata['qn'] > 0.5:
+                    st.success("✅ Capacidad portante adecuada")
+                else:
+                    st.warning("⚠️ Capacidad portante baja - Revisar suelo")
+                
+                # Verificación de dimensiones
+                if resultados_zapata['lado_zapata'] >= 100:
+                    st.success("✅ Dimensiones de zapata adecuadas")
+                else:
+                    st.info("ℹ️ Zapata pequeña - Considerar zapatas combinadas")
+                
+                # Gráfico de resultados
+                if PLOTLY_AVAILABLE:
+                    st.subheader("📈 Gráfico de Resultados")
+                    datos_zapata = pd.DataFrame({
+                        'Propiedad': ['Capacidad (kg/cm²)', 'Área (cm²)', 'Lado (cm)', 'Peralte (cm)'],
+                        'Valor': [resultados_zapata['qn'], resultados_zapata['A_estimada']/10000, 
+                                 resultados_zapata['lado_zapata']/100, resultados_zapata['d_estimado']/100]
+                    })
+                    
+                    fig = px.bar(datos_zapata, x='Propiedad', y='Valor',
+                                title="Resultados del Diseño de Zapata - Plan Premium",
+                                color='Propiedad',
+                                color_discrete_map={
+                                    'Capacidad (kg/cm²)': '#2E8B57',
+                                    'Área (cm²)': '#4169E1',
+                                    'Lado (cm)': '#DC143C',
+                                    'Peralte (cm)': '#FFD700'
+                                })
+                    
+                    fig.update_layout(
+                        xaxis_title="Propiedad",
+                        yaxis_title="Valor",
+                        height=400
+                    )
+                    
+                    fig.update_traces(texttemplate='%{y:.2f}', textposition='outside')
+                    st.plotly_chart(fig, use_container_width=True)
+
+    elif opcion == "🔧 Diseño de Vigas":
+        st.title("🔧 Diseño de Vigas")
+        st.info("📚 Basado en ACI 318 - Capítulo 9 y Norma E.060")
+        
+        # Verificar acceso basado en plan
+        if st.session_state['plan'] == "gratuito":
+            st.warning("⚠️ Esta función requiere plan premium. Actualiza tu cuenta para acceder al diseño de vigas.")
+            st.info("Plan gratuito incluye: Cálculos básicos, resultados simples")
+            st.info("Plan premium incluye: Diseño completo de vigas, verificaciones detalladas")
+            
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("⭐ Actualizar a Premium", type="primary", key="upgrade_vigas"):
+                    st.session_state['show_pricing'] = True
+                    st.rerun()
+        else:
+            st.success("⭐ Plan Premium: Diseño completo de vigas con todas las verificaciones")
+            
+            # Datos de entrada para vigas
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("📐 Datos de Entrada")
+                fc_viga = st.number_input("f'c (kg/cm²)", 175, 700, 210, 10, key="fc_viga")
+                fy_viga = st.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, key="fy_viga")
+                b_viga = st.number_input("Ancho de Viga b (cm)", 20, 100, 25, 1, key="b_viga")
+                d_viga = st.number_input("Peralte Efectivo d (cm)", 30, 100, 50, 1, key="d_viga")
+                Mu_viga = st.number_input("Momento Último Mu (kg·cm)", 10000, 10000000, 500000, 1000, key="Mu_viga")
+                Vu_viga = st.number_input("Cortante Último Vu (kg)", 1000, 100000, 15000, 100, key="Vu_viga")
+            
+            with col2:
+                st.subheader("📋 Fórmulas Utilizadas")
+                st.markdown("""
+                **Momento Resistente:**
+                \[ M_n = A_s \cdot f_y \cdot (d - \frac{a}{2}) \]
+                
+                **Profundidad del Bloque:**
+                \[ a = \frac{A_s \cdot f_y}{0.85 \cdot f'_c \cdot b} \]
+                
+                **Corte Resistente:**
+                \[ V_c = 0.53\sqrt{f'_c} \cdot b \cdot d \]
+                
+                **Refuerzo por Corte:**
+                \[ V_s = \frac{V_u - \phi V_c}{\phi} \]
+                
+                **Espaciamiento de Estribos:**
+                \[ s = \frac{A_v \cdot f_y \cdot d}{V_s} \]
+                """, unsafe_allow_html=True)
+            
+            # Botón para calcular
+            if st.button("🔬 Calcular Diseño de Viga", type="primary"):
+                # Cálculos de diseño de viga
+                resultados_viga = calcular_diseno_vigas_detallado(fc_viga, fy_viga, b_viga, d_viga, Mu_viga, Vu_viga)
+                
+                st.success("¡Diseño de viga calculado exitosamente!")
+                st.balloons()
+                
+                # Mostrar resultados
+                st.subheader("📊 Resultados del Diseño de Viga")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.metric("Área de Acero (As)", f"{resultados_viga['As']:.1f} cm²")
+                    st.metric("Profundidad Bloque (a)", f"{resultados_viga['a']:.1f} cm")
+                    st.metric("Momento Resistente (φMn)", f"{resultados_viga['phiMn']:.0f} kg·cm")
+                    st.metric("Corte Concreto (Vc)", f"{resultados_viga['Vc']:.0f} kg")
+                
+                with col2:
+                    st.metric("Corte Acero (Vs)", f"{resultados_viga['Vs']:.0f} kg")
+                    st.metric("Espaciamiento Estribos", f"{resultados_viga['s_estribos']:.1f} cm")
+                    if resultados_viga['verificacion_momento']:
+                        st.success("✅ Verificación Momento: CUMPLE")
+                    else:
+                        st.error("❌ Verificación Momento: NO CUMPLE")
+                    if resultados_viga['verificacion_corte']:
+                        st.success("✅ Verificación Corte: CUMPLE")
+                    else:
+                        st.error("❌ Verificación Corte: NO CUMPLE")
+                
+                # Verificaciones detalladas
+                st.subheader("🔍 Verificaciones Detalladas")
+                
+                # Verificación de cuantía
+                rho_actual = resultados_viga['As'] / (b_viga * d_viga)
+                rho_min = max(0.8 * sqrt(fc_viga) / fy_viga, 14 / fy_viga)
+                rho_max = 0.75 * 0.85 * 0.85 * (fc_viga / fy_viga) * (6000 / (6000 + fy_viga))
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Cuantía Actual", f"{rho_actual:.4f}")
+                with col2:
+                    st.metric("Cuantía Mínima", f"{rho_min:.4f}")
+                with col3:
+                    st.metric("Cuantía Máxima", f"{rho_max:.4f}")
+                
+                if rho_min <= rho_actual <= rho_max:
+                    st.success("✅ Cuantía de acero dentro de límites")
+                else:
+                    st.warning("⚠️ Cuantía de acero fuera de límites - Revisar diseño")
+
+    elif opcion == "🏢 Diseño de Columnas":
+        st.title("🏢 Diseño de Columnas")
+        st.info("📚 Basado en ACI 318 - Capítulo 10 y Norma E.060")
+        
+        # Verificar acceso basado en plan
+        if st.session_state['plan'] == "gratuito":
+            st.warning("⚠️ Esta función requiere plan premium. Actualiza tu cuenta para acceder al diseño de columnas.")
+            st.info("Plan gratuito incluye: Cálculos básicos, resultados simples")
+            st.info("Plan premium incluye: Diseño completo de columnas, verificaciones detalladas")
+            
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("⭐ Actualizar a Premium", type="primary", key="upgrade_columnas"):
+                    st.session_state['show_pricing'] = True
+                    st.rerun()
+        else:
+            st.success("⭐ Plan Premium: Diseño completo de columnas con todas las verificaciones")
+            
+            # Datos de entrada para columnas
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("📐 Datos de Entrada")
+                fc_columna = st.number_input("f'c (kg/cm²)", 175, 700, 210, 10, key="fc_columna")
+                fy_columna = st.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, key="fy_columna")
+                lado_columna = st.number_input("Lado de Columna (cm)", 20, 100, 30, 1, key="lado_columna")
+                Ag_columna = lado_columna * lado_columna
+                st.write(f"**Área Bruta (Ag):** {Ag_columna} cm²")
+                rho_columna = st.number_input("Cuantía de Acero ρ (%)", 0.5, 6.0, 1.0, 0.1, key="rho_columna")
+                Ast_columna = rho_columna / 100 * Ag_columna
+                st.write(f"**Área de Acero (Ast):** {Ast_columna:.1f} cm²")
+                Pu_columna = st.number_input("Carga Axial Última Pu (kg)", 10000, 1000000, 100000, 1000, key="Pu_columna")
+            
+            with col2:
+                st.subheader("📋 Fórmulas Utilizadas")
+                st.markdown("""
+                **Carga Axial Resistente:**
+                \[ P_n = 0.85f'_c(A_g - A_{st}) + A_{st} \cdot f_y \]
+                
+                **Resistencia de Diseño:**
+                \[ \phi P_n = \phi \cdot P_n \]
+                
+                **Espaciamiento de Estribos:**
+                \[ s \leq \min(16\phi_b, 48\phi_e, b, h) \]
+                
+                **Cuantías:**
+                \[ 1\% \leq \rho \leq 6\% \]
+                """, unsafe_allow_html=True)
+            
+            # Botón para calcular
+            if st.button("🔬 Calcular Diseño de Columna", type="primary"):
+                # Cálculos de diseño de columna
+                resultados_columna = calcular_diseno_columnas_detallado(fc_columna, fy_columna, Ag_columna, Ast_columna, Pu_columna)
+                
+                st.success("¡Diseño de columna calculado exitosamente!")
+                st.balloons()
+                
+                # Mostrar resultados
+                st.subheader("📊 Resultados del Diseño de Columna")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.metric("Resistencia Nominal (Pn)", f"{resultados_columna['Pn']:.0f} kg")
+                    st.metric("Resistencia Diseño (φPn)", f"{resultados_columna['phiPn']:.0f} kg")
+                    st.metric("Factor φ", f"{resultados_columna['phi']:.2f}")
+                    st.metric("Espaciamiento Máx. Estribos", f"{resultados_columna['s_max_estribos']:.1f} cm")
+                
+                with col2:
+                    st.metric("Cuantía Actual", f"{resultados_columna['rho']:.3f}")
+                    st.metric("Cuantía Mínima", f"{resultados_columna['rho_min']:.3f}")
+                    st.metric("Cuantía Máxima", f"{resultados_columna['rho_max']:.3f}")
+                    if resultados_columna['verificacion_carga']:
+                        st.success("✅ Verificación Carga: CUMPLE")
+                    else:
+                        st.error("❌ Verificación Carga: NO CUMPLE")
+                
+                # Verificaciones detalladas
+                st.subheader("🔍 Verificaciones Detalladas")
+                
+                if resultados_columna['verificacion_cuantia']:
+                    st.success("✅ Cuantía de acero dentro de límites")
+                else:
+                    st.warning("⚠️ Cuantía de acero fuera de límites - Revisar diseño")
+                
+                # Factor de seguridad
+                FS_columna = resultados_columna['phiPn'] / Pu_columna
+                st.metric("Factor de Seguridad", f"{FS_columna:.2f}")
+                
+                if FS_columna >= 1.0:
+                    st.success("✅ Columna segura")
+                else:
+                    st.error("❌ Columna insegura - Aumentar dimensiones o acero")
+
+    elif opcion == "✂️ Ejercicio Básico de Corte":
+        st.title("✂️ Ejercicio Básico de Corte")
+        st.info("📚 Basado en las fórmulas del PDF - Norma E.060 y ACI 318")
+        
+        # Verificar acceso basado en plan
+        if st.session_state['plan'] == "gratuito":
+            st.warning("⚠️ Esta función requiere plan premium. Actualiza tu cuenta para acceder al ejercicio de corte.")
+            st.info("Plan gratuito incluye: Cálculos básicos, resultados simples")
+            st.info("Plan premium incluye: Ejercicios detallados de corte, verificaciones completas")
+            
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("⭐ Actualizar a Premium", type="primary", key="upgrade_corte"):
+                    st.session_state['show_pricing'] = True
+                    st.rerun()
+        else:
+            st.success("⭐ Plan Premium: Ejercicio completo de corte con todas las verificaciones")
+            
+            # Datos de entrada para ejercicio de corte
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("📐 Datos de Entrada")
+                fc_corte = st.number_input("f'c (kg/cm²)", 175, 700, 210, 10, key="fc_corte")
+                b_corte = st.number_input("Ancho de Viga b (cm)", 20, 100, 25, 1, key="b_corte")
+                d_corte = st.number_input("Peralte Efectivo d (cm)", 30, 100, 54, 1, key="d_corte")
+                Vu_corte = st.number_input("Cortante Último Vu (kg)", 1000, 100000, 16600, 100, key="Vu_corte")
+                fy_corte = st.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, key="fy_corte")
+            
+            with col2:
+                st.subheader("📋 Fórmulas del PDF")
+                st.markdown("""
+                **Corte Resistente del Concreto:**
+                \[ \phi V_c = 0.53\sqrt{f'_c} \cdot b \cdot d \]
+                
+                **Para Vu > φVc:**
+                \[ s = \frac{A_v \cdot f_y \cdot d}{V_u - \phi V_c} \]
+                
+                **Para φVc/2 < Vu ≤ φVc:**
+                \[ s_{max} = \min(\frac{d}{2}, 60cm) \]
+                
+                **Refuerzo Mínimo:**
+                \[ A_{v,min} = 0.2\sqrt{f'_c} \cdot \frac{b \cdot s}{f_y} \]
+                """, unsafe_allow_html=True)
+            
+            # Botón para calcular
+            if st.button("🔬 Calcular Ejercicio de Corte", type="primary"):
+                # Cálculos del ejercicio de corte
+                resultados_corte = calcular_ejercicio_basico_corte(fc_corte, b_corte, d_corte, Vu_corte, fy_corte)
+                
+                st.success("¡Ejercicio de corte calculado exitosamente!")
+                st.balloons()
+                
+                # Mostrar resultados
+                st.subheader("📊 Resultados del Ejercicio de Corte")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.metric("Corte Resistente (φVc)", f"{resultados_corte['phiVc']:.0f} kg")
+                    st.metric("Corte Acero Requerido (Vs)", f"{resultados_corte['Vs_requerido']:.0f} kg")
+                    st.metric("Espaciamiento Estribos", f"{resultados_corte['s_estribos']:.1f} cm")
+                    if resultados_corte['zona_critica']:
+                        st.warning("⚠️ Zona Crítica - Requiere refuerzo")
+                    else:
+                        st.success("✅ Zona No Crítica")
+                
+                with col2:
+                    st.metric("Refuerzo Mínimo (Av,min)", f"{resultados_corte['Av_min']:.3f} cm²/cm")
+                    if resultados_corte['verificacion']:
+                        st.success("✅ Verificación: CUMPLE")
+                    else:
+                        st.error("❌ Verificación: NO CUMPLE")
+                    st.metric("Factor de Seguridad", f"{Vu_corte / resultados_corte['phiVc']:.2f}")
+                
+                # Análisis detallado
+                st.subheader("🔍 Análisis Detallado")
+                
+                # Comparación con valores del PDF
+                st.markdown("**Comparación con valores del PDF:**")
+                st.write(f"- φVc calculado: {resultados_corte['phiVc']:.0f} kg")
+                st.write(f"- φVc del PDF: 8.86 ton = 8,860 kg")
+                
+                diferencia = abs(resultados_corte['phiVc'] - 8860) / 8860 * 100
+                if diferencia < 5:
+                    st.success(f"✅ Coincidencia excelente (diferencia: {diferencia:.1f}%)")
+                elif diferencia < 10:
+                    st.info(f"ℹ️ Coincidencia buena (diferencia: {diferencia:.1f}%)")
+                else:
+                    st.warning(f"⚠️ Diferencia significativa (diferencia: {diferencia:.1f}%)")
+                
+                # Recomendaciones
+                st.subheader("💡 Recomendaciones")
+                if resultados_corte['zona_critica']:
+                    st.info("📋 Distribución de estribos recomendada:")
+                    st.write("- 1@5cm, 5@10cm, resto@25cm")
+                    st.write("- Usar estribos #3 (φ3/8\")")
+                    st.write("- Verificar longitud de desarrollo")
+                else:
+                    st.info("📋 Estribos mínimos:")
+                    st.write("- Espaciamiento máximo: d/2 o 60cm")
+                    st.write("- Diámetro mínimo: φ3/8\"")
+
     elif opcion == "📈 Gráficos":
         st.title("📈 Gráficos y Visualizaciones")
         
@@ -2732,13 +3415,13 @@ Plan: Gratuito
     elif opcion == "✉️ Contacto":
         st.title("✉️ Contacto")
         st.write("""
-        ### 🏗️ GRUPO SELECTIVA - CONSORCIO DEJ
+        ### 🏗️ CONSORCIO DEJ
         **Información de Contacto:**
         
-        📧 Email: administrador@consorciodej.com  
-        📱 Teléfono: +51 967573364  
+        📧 Email: contacto@consorciodej.com  
+        📱 Teléfono: +123 456 7890  
         🌐 Web: www.consorciodej.com  
-        📍 Dirección: [Adepa - Jose Luis B. Rivero]
+        📍 Dirección: [Tu dirección aquí]
         
         **Horarios de Atención:**
         Lunes a Viernes: 8:00 AM - 6:00 PM
