@@ -14,18 +14,19 @@ import os
 # =====================
 
 # Importar matplotlib con manejo de errores
+MATPLOTLIB_AVAILABLE = False
+plt = None
+Rectangle = None
+Polygon = None
+
 try:
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Rectangle, Polygon
     import matplotlib
     matplotlib.use('Agg')  # Backend no interactivo para Streamlit
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle, Polygon
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
-    MATPLOTLIB_AVAILABLE = False
-    # Crear placeholders para evitar errores
-    plt = None
-    Rectangle = None
-    Polygon = None
+    pass
 
 # Verificación de plotly
 try:
@@ -1190,7 +1191,7 @@ def dibujar_viga(b, d, L, As, s_estribos, fc, fy):
     """
     Dibuja una viga con sus dimensiones y refuerzo
     """
-    if not MATPLOTLIB_AVAILABLE or plt is None:
+    if not MATPLOTLIB_AVAILABLE or plt is None or Rectangle is None:
         return None
         
     try:
@@ -1223,11 +1224,12 @@ def dibujar_viga(b, d, L, As, s_estribos, fc, fy):
             ax.plot([x, x], [0.05, 0.15], 'red', linewidth=3, label='Acero Inferior' if i == 0 else "")
         
         # Dibujar estribos (simplificado)
-        num_estribos = int(L / (s_estribos / escala))
-        for i in range(num_estribos):
-            x = (L / num_estribos) * i
-            rect_estribo = Rectangle((x, 0), 0.1, alto, linewidth=1, edgecolor='blue', facecolor='none', linestyle='--')
-            ax.add_patch(rect_estribo)
+        if s_estribos > 0:
+            num_estribos = int(L / (s_estribos / escala))
+            for i in range(num_estribos):
+                x = (L / num_estribos) * i
+                rect_estribo = Rectangle((x, 0), 0.1, alto, linewidth=1, edgecolor='blue', facecolor='none', linestyle='--')
+                ax.add_patch(rect_estribo)
         
         # Configurar gráfico
         ax.set_xlim(-0.5, largo + 0.5)
@@ -1258,7 +1260,7 @@ def dibujar_columna(lado, Ast, fc, fy):
     """
     Dibuja una columna con sus dimensiones y refuerzo
     """
-    if not MATPLOTLIB_AVAILABLE or plt is None:
+    if not MATPLOTLIB_AVAILABLE or plt is None or Rectangle is None:
         return None
         
     try:
@@ -1333,7 +1335,7 @@ def dibujar_zapata(lado, d, fc, fy):
     """
     Dibuja una zapata con sus dimensiones
     """
-    if not MATPLOTLIB_AVAILABLE or plt is None:
+    if not MATPLOTLIB_AVAILABLE or plt is None or Rectangle is None:
         return None
         
     try:
@@ -3897,7 +3899,56 @@ Plan: Gratuito
                         
                         # Gráfico 1: Propiedades principales
                         propiedades = ['φVc', 'Vs', 's', 'Av,min']
+                        valores = [resultados_corte['phiVc']/1000, resultados_corte['Vs_requerido']/1000, 
+                                 resultados_corte['s_estribos'], resultados_corte['Av_min']]
+                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
                         
+                        bars1 = ax1.bar(propiedades, valores, color=colors)
+                        ax1.set_title("Propiedades del Ejercicio de Corte")
+                        ax1.set_ylabel("Valor")
+                        
+                        for bar in bars1:
+                            height = bar.get_height()
+                            ax1.text(bar.get_x() + bar.get_width()/2., height + 0.01,
+                                   f'{height:.2f}', ha='center', va='bottom')
+                        
+                        # Gráfico 2: Comparación con PDF
+                        fuentes = ['Cálculo Actual', 'Valor del PDF']
+                        valores_pdf = [resultados_corte['phiVc']/1000, 8.86]
+                        colors_pdf = ['#2E8B57', '#4169E1']
+                        
+                        bars2 = ax2.bar(fuentes, valores_pdf, color=colors_pdf)
+                        ax2.set_title("Comparación con Valores del PDF")
+                        ax2.set_ylabel("φVc (ton)")
+                        
+                        for bar in bars2:
+                            height = bar.get_height()
+                            ax2.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                                   f'{height:.2f}', ha='center', va='bottom')
+                        
+                        # Gráfico 3: Estado de la zona
+                        estado_zona = 'Crítica' if resultados_corte['zona_critica'] else 'No Crítica'
+                        color_zona = '#DC143C' if resultados_corte['zona_critica'] else '#2E8B57'
+                        
+                        ax3.pie([1], labels=[estado_zona], autopct='%1.1f%%', colors=[color_zona])
+                        ax3.set_title("Estado de la Zona de Corte")
+                        
+                        # Gráfico 4: Factor de seguridad
+                        FS_corte = Vu_corte / resultados_corte['phiVc']
+                        ax4.bar(['Factor de Seguridad'], [FS_corte], 
+                               color='#2E8B57' if FS_corte >= 1.0 else '#DC143C')
+                        ax4.set_title("Factor de Seguridad")
+                        ax4.set_ylabel("Valor")
+                        ax4.axhline(y=1.0, color='red', linestyle='--', label='Límite de Seguridad')
+                        ax4.text(0, FS_corte + 0.05, f'{FS_corte:.2f}', ha='center', va='bottom')
+                        ax4.legend()
+                        
+                        plt.tight_layout()
+                        st.pyplot(fig)
+                        
+                    except Exception as e:
+                        st.info(f"📊 Gráfico no disponible: {str(e)}")
+                
                 # Gráfico de cortantes y momentos según McCormac
                 st.subheader("📊 Diagramas de Cortantes y Momentos (McCormac)")
                 
@@ -3924,9 +3975,6 @@ Plan: Gratuito
                 fig_corte = dibujar_viga(b_corte, d_corte, L_corte_mccormac, 0, resultados_corte['s_estribos'], fc_corte, fy_corte)
                 if fig_corte:
                     st.pyplot(fig_corte)
-                        valores = [resultados_corte['phiVc']/1000, resultados_corte['Vs_requerido']/1000, 
-                                 resultados_corte['s_estribos'], resultados_corte['Av_min']]
-                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
                         
                         bars1 = ax1.bar(propiedades, valores, color=colors)
                         ax1.set_title("Propiedades del Ejercicio de Corte")
