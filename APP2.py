@@ -3337,12 +3337,18 @@ Plan: Gratuito
                     verificaciones = ['Momento', 'Corte']
                     valores_verificacion = [1 if resultados_viga['verificacion_momento'] else 0, 
                                            1 if resultados_viga['verificacion_corte'] else 0]
-                    colores_verificacion = ['#2E8B57' if v == 1 else '#DC143C' for v in valores_verificacion]
                     
-                    fig2 = px.bar(x=verificaciones, y=valores_verificacion,
+                    # Crear DataFrame para el gráfico
+                    df_verificaciones = pd.DataFrame({
+                        'Verificación': verificaciones,
+                        'Estado': valores_verificacion,
+                        'Estado_Texto': ['Cumple' if v == 1 else 'No Cumple' for v in valores_verificacion]
+                    })
+                    
+                    fig2 = px.bar(df_verificaciones, x='Verificación', y='Estado',
                                 title="Estado de Verificaciones",
-                                color=colores_verificacion,
-                                color_discrete_map={'#2E8B57': 'Cumple', '#DC143C': 'No Cumple'})
+                                color='Estado_Texto',
+                                color_discrete_map={'Cumple': '#2E8B57', 'No Cumple': '#DC143C'})
                     
                     fig2.update_layout(
                         xaxis_title="Verificación",
@@ -3917,10 +3923,18 @@ Plan: Gratuito
                         'Valor': [FS_corte]
                     })
                     
+                    # Crear DataFrame con estado del factor de seguridad
+                    estado_fs = 'Seguro' if FS_corte >= 1.0 else 'Inseguro'
+                    datos_fs = pd.DataFrame({
+                        'Tipo': ['Factor de Seguridad'],
+                        'Valor': [FS_corte],
+                        'Estado': [estado_fs]
+                    })
+                    
                     fig4 = px.bar(datos_fs, x='Tipo', y='Valor',
                                 title="Factor de Seguridad",
-                                color='Tipo',
-                                color_discrete_map={'Factor de Seguridad': '#2E8B57' if FS_corte >= 1.0 else '#DC143C'})
+                                color='Estado',
+                                color_discrete_map={'Seguro': '#2E8B57', 'Inseguro': '#DC143C'})
                     
                     fig4.update_layout(
                         xaxis_title="Tipo",
