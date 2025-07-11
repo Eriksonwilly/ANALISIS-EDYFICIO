@@ -12,12 +12,16 @@ import os
 # =====================
 # CONFIGURACIÓN DE PÁGINA STREAMLIT
 # =====================
-st.set_page_config(
-    page_title="CONSORCIO DEJ - Análisis Estructural",
-    page_icon="🏗️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+try:
+    st.set_page_config(
+        page_title="CONSORCIO DEJ - Análisis Estructural",
+        page_icon="🏗️",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+except Exception as e:
+    # Fallback si hay problemas con la configuración
+    pass
 
 # =====================
 # IMPORTACIONES DE GRÁFICOS (DIRECTAS COMO EN APP1.PY)

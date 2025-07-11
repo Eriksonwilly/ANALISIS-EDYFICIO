@@ -3,12 +3,15 @@ import numpy as np
 import pandas as pd
 import math
 
-# Configuración de la página
-st.set_page_config(
-    page_title="CONSORCIO DEJ - Análisis Estructural",
-    page_icon="🏗️",
-    layout="wide"
-)
+# Configuración de la página con manejo de errores
+try:
+    st.set_page_config(
+        page_title="CONSORCIO DEJ - Análisis Estructural",
+        page_icon="🏗️",
+        layout="wide"
+    )
+except:
+    pass
 
 # Título principal
 st.title("🏗️ CONSORCIO DEJ - Análisis Estructural")
