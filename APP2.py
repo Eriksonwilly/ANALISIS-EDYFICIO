@@ -49,13 +49,8 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
     # No mostrar warning aquí para evitar problemas en la carga inicial
 
-# Importar sistema de pagos simple
-try:
-    from simple_payment_system import payment_system
-    PAYMENT_SYSTEM_AVAILABLE = True
-except ImportError:
-    PAYMENT_SYSTEM_AVAILABLE = False
-    # No mostrar warning aquí para evitar problemas en la carga inicial
+# Sistema de pagos simple (simulado)
+PAYMENT_SYSTEM_AVAILABLE = False
 
 # Variables globales para compatibilidad
 # MATPLOTLIB_AVAILABLE se define en el bloque try/except de arriba
