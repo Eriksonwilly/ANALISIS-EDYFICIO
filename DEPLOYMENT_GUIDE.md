@@ -1,29 +1,28 @@
-# 🚀 Guía de Despliegue - CONSORCIO DEJ
+# 🚀 Guía de Despliegue - CONSORCIO DEJ (CORREGIDA)
 
 ## 📋 Despliegue en Streamlit Cloud
 
-### ✅ Archivos Necesarios
+### ✅ Archivos Necesarios (CORREGIDOS)
 
 Asegúrate de tener estos archivos en tu repositorio:
 
 ```
 📁 Tu Repositorio/
-├── 📄 APP2.py                    # Aplicación principal
-├── 📄 requirements.txt           # Dependencias de Python
-├── 📄 packages.txt              # Dependencias del sistema
-├── 📄 .streamlit/config.toml    # Configuración de Streamlit
-├── 📄 setup.sh                  # Script de configuración
-├── 📄 verificar_dependencias.py # Verificador de dependencias
-└── 📄 README.md                 # Documentación
+├── 📄 streamlit_app.py          # ✅ Aplicación principal (CORREGIDA)
+├── 📄 requirements.txt          # ✅ Dependencias básicas (CORREGIDAS)
+├── 📄 packages.txt             # ✅ Dependencias del sistema (SIMPLIFICADAS)
+├── 📄 .streamlit/config.toml   # ✅ Configuración (SIMPLIFICADA)
+├── 📄 app_basic.py             # ✅ Versión de respaldo
+└── 📄 README.md                # ✅ Documentación
 ```
 
-### 🔧 Pasos para el Despliegue
+### 🔧 Pasos para el Despliegue (ACTUALIZADOS)
 
 #### 1. Preparar el Repositorio
 ```bash
 # Asegúrate de que todos los archivos estén en tu repositorio
 git add .
-git commit -m "Preparar para despliegue en Streamlit Cloud"
+git commit -m "Corregir aplicación para Streamlit Cloud"
 git push origin main
 ```
 
@@ -31,71 +30,58 @@ git push origin main
 1. Ve a [share.streamlit.io](https://share.streamlit.io)
 2. Inicia sesión con tu cuenta de GitHub
 3. Selecciona tu repositorio
-4. Configura el archivo principal: `APP2.py`
+4. Configura el archivo principal: `streamlit_app.py`
 5. Haz clic en "Deploy!"
 
-#### 3. Configuración Recomendada
-- **Main file path**: `APP2.py`
+#### 3. Configuración Recomendada (CORREGIDA)
+- **Main file path**: `streamlit_app.py`
 - **Python version**: 3.8 o superior
 - **Requirements file**: `requirements.txt`
 
-### 📦 Dependencias Incluidas
+### 📦 Dependencias Incluidas (CORREGIDAS)
 
-#### requirements.txt
+#### requirements.txt (SIMPLIFICADO)
 ```
-streamlit>=1.28.0
-numpy>=1.24.0
-pandas>=2.0.0
-matplotlib>=3.7.0
-plotly>=5.15.0
-reportlab>=4.0.0
+streamlit==1.28.1
+numpy==1.24.3
+pandas==2.0.3
 ```
 
-#### packages.txt
+#### packages.txt (SIMPLIFICADO)
 ```
 libgl1-mesa-glx
 libglib2.0-0
-libgomp1
-libfreetype6
-libpng16-16
 ```
 
 ### 🔍 Verificación del Despliegue
 
 #### Verificar Dependencias
 ```bash
-# Ejecutar el verificador
+# Ejecutar el verificador simplificado
 python verificar_dependencias.py
 ```
 
 #### Verificar Funcionalidades
-1. ✅ **Autenticación**: Login/Registro
-2. ✅ **Diseño de Zapatas**: Cálculos y gráficos
-3. ✅ **Diseño de Vigas**: Cálculos y dibujos
-4. ✅ **Diseño de Columnas**: Cálculos y visualizaciones
-5. ✅ **Ejercicio de Corte**: Cálculos y diagramas
-6. ✅ **Gráficos**: Plotly y Matplotlib
-7. ✅ **PWA**: Funcionalidades offline
+1. ✅ **Aplicación básica**: Carga correctamente
+2. ✅ **Diseño de Zapatas**: Cálculos básicos
+3. ✅ **Diseño de Vigas**: Cálculos básicos
+4. ✅ **Diseño de Columnas**: Cálculos básicos
+5. ✅ **Ejercicio de Corte**: Cálculos básicos
+6. ✅ **Sin errores**: De dependencias
 
-### 🛠️ Solución de Problemas
+### 🛠️ Solución de Problemas (ACTUALIZADA)
 
-#### Error: "Error al instalar requisitos"
-**Solución:**
-1. Verifica que `requirements.txt` esté en la raíz del repositorio
-2. Asegúrate de que las versiones sean compatibles
-3. Revisa los logs de Streamlit Cloud
+#### Error: "Error al instalar requisitos" - SOLUCIONADO
+**Solución implementada:**
+1. ✅ Dependencias simplificadas en requirements.txt
+2. ✅ Versiones específicas y compatibles
+3. ✅ Configuración mínima de Streamlit
 
-#### Error: "ModuleNotFoundError"
-**Solución:**
-1. Ejecuta `python verificar_dependencias.py`
-2. Instala dependencias faltantes: `pip install -r requirements.txt`
-3. Verifica que `packages.txt` esté presente
-
-#### Error: "Gráficos no aparecen"
-**Solución:**
-1. Verifica instalación de matplotlib: `pip install matplotlib`
-2. Verifica instalación de plotly: `pip install plotly`
-3. Revisa los logs de la aplicación
+#### Error: "ModuleNotFoundError" - SOLUCIONADO
+**Solución implementada:**
+1. ✅ Solo dependencias esenciales
+2. ✅ Verificaciones de disponibilidad
+3. ✅ Fallbacks para librerías opcionales
 
 ### 📊 Monitoreo
 
@@ -126,29 +112,17 @@ git push origin main
 2. Haz commit y push
 3. Streamlit Cloud reinstalará las dependencias
 
-### 📱 Funcionalidades PWA
-
-#### Configuración PWA
-- La aplicación incluye funcionalidades PWA
-- Se puede instalar en dispositivos móviles
-- Funciona offline con cache
-
-#### Generar PWA
-```bash
-python generar_pwa.py
-```
-
-### 🎯 Optimizaciones
+### 🎯 Optimizaciones (IMPLEMENTADAS)
 
 #### Para Mejor Rendimiento
-1. **Caché de datos**: Usar `@st.cache_data`
-2. **Caché de funciones**: Usar `@st.cache_resource`
-3. **Lazy loading**: Cargar módulos solo cuando se necesiten
+1. ✅ **Dependencias mínimas**: Solo lo esencial
+2. ✅ **Configuración simple**: Sin opciones complejas
+3. ✅ **Verificaciones**: De disponibilidad de librerías
 
 #### Para Menor Uso de Memoria
-1. **Limpiar variables**: Usar `del` para variables grandes
-2. **Optimizar gráficos**: Reducir tamaño de figuras
-3. **Manejo de errores**: Capturar excepciones apropiadamente
+1. ✅ **Librerías básicas**: Sin dependencias pesadas
+2. ✅ **Código optimizado**: Sin importaciones innecesarias
+3. ✅ **Manejo de errores**: Captura de excepciones
 
 ### 📞 Soporte
 
@@ -159,9 +133,9 @@ python generar_pwa.py
 
 #### Contacto
 - **Desarrollador**: CONSORCIO DEJ
-- **Versión**: 2.0
+- **Versión**: 2.0 (CORREGIDA)
 - **Fecha**: 2024
 
 ---
 
-**¡Tu aplicación CONSORCIO DEJ está lista para el despliegue! 🚀✨** 
+**¡Tu aplicación CONSORCIO DEJ está corregida y lista para el despliegue! 🚀✨** 

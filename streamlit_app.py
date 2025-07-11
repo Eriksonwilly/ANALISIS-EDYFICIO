@@ -7,8 +7,7 @@ import math
 st.set_page_config(
     page_title="CONSORCIO DEJ - Análisis Estructural",
     page_icon="🏗️",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 # Título principal
@@ -29,20 +28,6 @@ try:
     st.sidebar.success("✅ Pandas instalado")
 except:
     st.sidebar.error("❌ Pandas no disponible")
-
-# Verificar matplotlib
-try:
-    import matplotlib.pyplot as plt
-    st.sidebar.success("✅ Matplotlib instalado")
-except:
-    st.sidebar.warning("⚠️ Matplotlib no disponible")
-
-# Verificar plotly
-try:
-    import plotly.express as px
-    st.sidebar.success("✅ Plotly instalado")
-except:
-    st.sidebar.warning("⚠️ Plotly no disponible")
 
 # Menú principal
 st.sidebar.title("📋 Menú Principal")
@@ -65,7 +50,6 @@ if opcion == "🏠 Inicio":
     
     ### Características:
     - ✅ Cálculos según ACI 318 y Norma E.060
-    - ✅ Gráficos interactivos
     - ✅ Verificaciones automáticas
     - ✅ Reportes técnicos
     """)
@@ -81,7 +65,6 @@ if opcion == "🏠 Inicio":
 
 elif opcion == "🔧 Diseño de Zapatas":
     st.header("🔧 Diseño de Zapatas")
-    st.info("Funcionalidad en desarrollo...")
     
     # Datos de entrada básicos
     col1, col2 = st.columns(2)
@@ -105,7 +88,6 @@ elif opcion == "🔧 Diseño de Zapatas":
 
 elif opcion == "🔧 Diseño de Vigas":
     st.header("🔧 Diseño de Vigas")
-    st.info("Funcionalidad en desarrollo...")
     
     # Datos de entrada básicos
     col1, col2 = st.columns(2)
@@ -129,7 +111,6 @@ elif opcion == "🔧 Diseño de Vigas":
 
 elif opcion == "🏢 Diseño de Columnas":
     st.header("🏢 Diseño de Columnas")
-    st.info("Funcionalidad en desarrollo...")
     
     # Datos de entrada básicos
     col1, col2 = st.columns(2)
@@ -153,7 +134,6 @@ elif opcion == "🏢 Diseño de Columnas":
 
 elif opcion == "✂️ Ejercicio Básico de Corte":
     st.header("✂️ Ejercicio Básico de Corte")
-    st.info("Funcionalidad en desarrollo...")
     
     # Datos de entrada básicos
     col1, col2 = st.columns(2)

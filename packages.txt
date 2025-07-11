@@ -1,13 +1,2 @@
-# Dependencias del sistema para Streamlit Cloud
-# Este archivo es necesario para instalar paquetes del sistema operativo
-
-# Para gráficos y visualización
 libgl1-mesa-glx
-libglib2.0-0
-
-# Para procesamiento de datos
-libgomp1
-
-# Para generación de PDFs
-libfreetype6
-libpng16-16 
+libglib2.0-0 
