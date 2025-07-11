@@ -3970,6 +3970,17 @@ Plan: Gratuito
                 fig_corte = dibujar_viga(b_corte, d_corte, L_corte_mccormac, 0, resultados_corte['s_estribos'], fc_corte, fy_corte)
                 if fig_corte:
                     st.pyplot(fig_corte)
+                
+                # Gráficos adicionales si matplotlib está disponible
+                if MATPLOTLIB_AVAILABLE:
+                    try:
+                        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 10))
+                        
+                        # Gráfico 1: Propiedades del ejercicio
+                        propiedades = ['Vu (ton)', 'φVc (ton)', 'φVs (ton)', 's_estribos (cm)']
+                        valores = [Vu_corte/1000, resultados_corte['phiVc']/1000, 
+                                 resultados_corte['phiVs']/1000, resultados_corte['s_estribos']]
+                        colors = ['#2E8B57', '#DC143C', '#4169E1', '#FFD700']
                         
                         bars1 = ax1.bar(propiedades, valores, color=colors)
                         ax1.set_title("Propiedades del Ejercicio de Corte")
