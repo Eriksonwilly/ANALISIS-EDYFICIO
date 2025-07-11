@@ -1231,10 +1231,13 @@ def dibujar_viga(b, d, L, As, s_estribos, fc, fy):
     """
     Dibuja una viga con sus dimensiones y refuerzo
     """
-    if not MATPLOTLIB_AVAILABLE or plt is None or Rectangle is None:
+    if not MATPLOTLIB_AVAILABLE:
         return None
         
     try:
+        if plt is None or Rectangle is None:
+            return None
+            
         fig, ax = plt.subplots(figsize=(12, 8))
         
         # Escala para visualización
@@ -1293,17 +1296,21 @@ def dibujar_viga(b, d, L, As, s_estribos, fc, fy):
         return fig
         
     except Exception as e:
-        st.error(f"Error dibujando viga: {str(e)}")
+        # No mostrar error en st.error para evitar problemas en la interfaz
+        print(f"Error dibujando viga: {str(e)}")
         return None
 
 def dibujar_columna(lado, Ast, fc, fy):
     """
     Dibuja una columna con sus dimensiones y refuerzo
     """
-    if not MATPLOTLIB_AVAILABLE or plt is None or Rectangle is None:
+    if not MATPLOTLIB_AVAILABLE:
         return None
         
     try:
+        if plt is None or Rectangle is None:
+            return None
+            
         fig, ax = plt.subplots(figsize=(8, 8))
         
         # Escala para visualización
@@ -1368,17 +1375,21 @@ def dibujar_columna(lado, Ast, fc, fy):
         return fig
         
     except Exception as e:
-        st.error(f"Error dibujando columna: {str(e)}")
+        # No mostrar error en st.error para evitar problemas en la interfaz
+        print(f"Error dibujando columna: {str(e)}")
         return None
 
 def dibujar_zapata(lado, d, fc, fy):
     """
     Dibuja una zapata con sus dimensiones
     """
-    if not MATPLOTLIB_AVAILABLE or plt is None or Rectangle is None:
+    if not MATPLOTLIB_AVAILABLE:
         return None
         
     try:
+        if plt is None or Rectangle is None:
+            return None
+            
         fig, ax = plt.subplots(figsize=(10, 8))
         
         # Escala para visualización
@@ -1390,7 +1401,7 @@ def dibujar_zapata(lado, d, fc, fy):
         peralte = d / escala
         
         # Dibujar zapata
-        rect_zapata = Rectangle((0, 0), ancho, alto, linewidth=2, edgecolor='black', facecolor='lightbrown', alpha=0.7)
+        rect_zapata = Rectangle((0, 0), ancho, alto, linewidth=2, edgecolor='black', facecolor='sandybrown', alpha=0.7)
         ax.add_patch(rect_zapata)
         
         # Dibujar columna (simplificado)
@@ -1425,7 +1436,7 @@ def dibujar_zapata(lado, d, fc, fy):
                 ha='center', va='center', bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7))
         
         # Agregar leyenda
-        ax.text(0.02, alto - 0.1, 'Zapata', bbox=dict(boxstyle="round,pad=0.3", facecolor="lightbrown", alpha=0.7))
+        ax.text(0.02, alto - 0.1, 'Zapata', bbox=dict(boxstyle="round,pad=0.3", facecolor="sandybrown", alpha=0.7))
         ax.text(x_col + lado_columna/2, y_col + lado_columna/2, 'Columna', 
                 ha='center', va='center', color='white', fontweight='bold')
         
@@ -1433,7 +1444,8 @@ def dibujar_zapata(lado, d, fc, fy):
         return fig
         
     except Exception as e:
-        st.error(f"Error dibujando zapata: {str(e)}")
+        # No mostrar error en st.error para evitar problemas en la interfaz
+        print(f"Error dibujando zapata: {str(e)}")
         return None
 
 # =====================
