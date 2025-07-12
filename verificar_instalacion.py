@@ -1,109 +1,63 @@
 #!/usr/bin/env python3
 """
-Script de verificación para CONSORCIO DEJ - Análisis Estructural
-Verifica que todas las dependencias estén instaladas correctamente
+Script para verificar que todas las dependencias están instaladas correctamente
 """
 
-import sys
-import importlib
-
-def verificar_modulo(nombre_modulo, nombre_mostrar=None):
-    """Verificar si un módulo está disponible"""
-    if nombre_mostrar is None:
-        nombre_mostrar = nombre_modulo
+def verificar_modulo(nombre, import_name=None):
+    """Verifica si un módulo está disponible"""
+    if import_name is None:
+        import_name = nombre
     
     try:
-        importlib.import_module(nombre_modulo)
-        print(f"✅ {nombre_mostrar} - OK")
+        __import__(import_name)
+        print(f"✅ {nombre} - OK")
         return True
-    except ImportError:
-        print(f"❌ {nombre_mostrar} - NO DISPONIBLE")
+    except ImportError as e:
+        print(f"❌ {nombre} - ERROR: {e}")
         return False
 
 def main():
-    print("=" * 60)
-    print("   VERIFICACIÓN DE DEPENDENCIAS - CONSORCIO DEJ")
-    print("=" * 60)
-    print()
+    print("🔍 Verificador de Dependencias para APP2.py")
+    print("=" * 50)
     
-    # Verificar Python
-    print(f"🐍 Python {sys.version}")
-    print()
-    
-    # Lista de módulos a verificar
+    # Lista de módulos críticos
     modulos = [
-        ("streamlit", "Streamlit"),
-        ("pandas", "Pandas"),
-        ("numpy", "NumPy"),
-        ("matplotlib", "Matplotlib"),
-        ("plotly", "Plotly"),
-        ("reportlab", "ReportLab"),
-        ("openpyxl", "OpenPyXL"),
+        ("Streamlit", "streamlit"),
+        ("NumPy", "numpy"),
+        ("Pandas", "pandas"),
+        ("Matplotlib", "matplotlib"),
+        ("Plotly", "plotly"),
+        ("ReportLab", "reportlab"),
+        ("Pillow", "PIL"),
+        ("SciPy", "scipy")
     ]
     
-    print("📦 Verificando dependencias:")
-    print("-" * 40)
+    exitos = 0
+    total = len(modulos)
     
-    modulos_ok = 0
-    for modulo, nombre in modulos:
-        if verificar_modulo(modulo, nombre):
-            modulos_ok += 1
+    for nombre, import_name in modulos:
+        if verificar_modulo(nombre, import_name):
+            exitos += 1
     
-    print("-" * 40)
-    print(f"📊 Resultado: {modulos_ok}/{len(modulos)} módulos disponibles")
-    print()
+    print("\n" + "=" * 50)
+    print(f"📊 Resumen: {exitos}/{total} módulos disponibles")
     
-    # Verificar archivos del proyecto
-    print("📁 Verificando archivos del proyecto:")
-    print("-" * 40)
-    
-    archivos_requeridos = [
-        "APP2.py",
-        "simple_payment_system.py",
-        "admin_config.py",
-        "admin_panel.py",
-        "requirements.txt",
-        ".streamlit/config.toml"
-    ]
-    
-    import os
-    archivos_ok = 0
-    for archivo in archivos_requeridos:
-        if os.path.exists(archivo):
-            print(f"✅ {archivo} - OK")
-            archivos_ok += 1
-        else:
-            print(f"❌ {archivo} - NO ENCONTRADO")
-    
-    print("-" * 40)
-    print(f"📊 Resultado: {archivos_ok}/{len(archivos_requeridos)} archivos encontrados")
-    print()
-    
-    # Resumen final
-    print("=" * 60)
-    print("   RESUMEN")
-    print("=" * 60)
-    
-    if modulos_ok == len(modulos) and archivos_ok == len(archivos_requeridos):
-        print("🎉 ¡Todo está listo! La aplicación debería funcionar correctamente.")
-        print()
-        print("🚀 Para ejecutar la aplicación:")
-        print("   streamlit run APP2.py")
-        print()
-        print("🔑 Credenciales de prueba:")
-        print("   admin / admin123 (Plan Empresarial)")
-        print("   demo / demo (Plan Gratuito)")
+    if exitos == total:
+        print("🎉 ¡Todas las dependencias están instaladas correctamente!")
+        print("🚀 La aplicación debería funcionar sin problemas.")
+        
+        # Verificación adicional de matplotlib
+        try:
+            import matplotlib
+            import matplotlib.pyplot as plt
+            from matplotlib.patches import Rectangle, Polygon, Patch
+            print("✅ Matplotlib está configurado correctamente para gráficos")
+        except Exception as e:
+            print(f"⚠️ Matplotlib tiene problemas: {e}")
     else:
-        print("⚠️ Hay algunos problemas que resolver:")
-        print()
-        if modulos_ok < len(modulos):
-            print("📦 Instalar dependencias faltantes:")
-            print("   pip install -r requirements.txt")
-            print()
-        if archivos_ok < len(archivos_requeridos):
-            print("📁 Verificar que todos los archivos del proyecto estén presentes")
-            print()
-        print("🔄 Después de resolver los problemas, ejecuta este script nuevamente.")
+        print("⚠️ Algunas dependencias faltan.")
+        print("💡 Ejecuta: pip install -r requirements.txt")
+        print("💡 O ejecuta: python instalar_dependencias.py")
 
 if __name__ == "__main__":
     main() 
