@@ -45,7 +45,8 @@ try:
     from matplotlib.patches import Rectangle, Polygon
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
-    pass
+    MATPLOTLIB_AVAILABLE = False
+    plt = None
 
 # Verificación de plotly
 try:
@@ -2330,14 +2331,18 @@ else:
         
         if archivos_ok == len(archivos_pwa):
             st.sidebar.success("✅ PWA configurada")
+        elif archivos_ok > 0:
+            st.sidebar.info(f"📱 PWA parcialmente configurada ({archivos_ok}/{len(archivos_pwa)} archivos)")
         else:
-            st.sidebar.warning(f"⚠️ {len(archivos_pwa) - archivos_ok} archivos faltantes")
+            st.sidebar.info("📱 PWA no configurada (opcional)")
         
+        # Verificar iconos de manera opcional
         if os.path.exists('icons'):
             iconos = len([f for f in os.listdir('icons') if f.endswith('.svg')])
-            st.sidebar.info(f"🎨 {iconos} iconos generados")
+            if iconos > 0:
+                st.sidebar.info(f"🎨 {iconos} iconos disponibles")
         else:
-            st.sidebar.error("❌ Iconos no encontrados")
+            st.sidebar.info("🎨 Iconos PWA (opcional)")
     
     # Mostrar estado PWA
     mostrar_estado_pwa()
