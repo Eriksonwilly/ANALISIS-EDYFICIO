@@ -1738,6 +1738,211 @@ def graficar_estribado_viga(L, d, s_critica, s_no_critica, b=25):
         
         # Dibujar estribos en zona no crítica
         if s_no_critica > 0:
+            num_estribos_no_critica = int((L * 100 - d) / s_no_critica)
+            for i in range(num_estribos_no_critica):
+                x = d/100 + (L * 100 - d) * i / num_estribos_no_critica / 100
+                rect_estribo = Rectangle((x, 0), 0.05, alto, linewidth=1, edgecolor='blue', facecolor='blue', alpha=0.3)
+                ax.add_patch(rect_estribo)
+        
+        # Configurar gráfico
+        ax.set_xlim(-0.1, largo + 0.1)
+        ax.set_ylim(-0.1, alto + 0.1)
+        ax.set_aspect('equal')
+        ax.set_title('Estribado de la Viga - Vista Lateral', fontsize=14, fontweight='bold')
+        ax.set_xlabel('Longitud (m)')
+        ax.set_ylabel('Altura (m)')
+        ax.grid(True, alpha=0.3)
+        
+        # Agregar leyenda
+        from matplotlib.patches import Patch
+        legend_elements = [
+            Patch(facecolor='red', alpha=0.2, label='Zona Crítica'),
+            Patch(facecolor='blue', alpha=0.1, label='Zona No Crítica'),
+            Patch(facecolor='red', alpha=0.5, label='Estribos Críticos'),
+            Patch(facecolor='blue', alpha=0.3, label='Estribos No Críticos')
+        ]
+        ax.legend(handles=legend_elements, loc='upper right')
+        
+        plt.tight_layout()
+        return fig
+        
+    except Exception as e:
+        print(f"Error graficando estribado de viga: {str(e)}")
+        return None
+
+@safe_matplotlib_plot
+def dibujar_corte_lateral_derecho(b, h, d, cantidad_fierro, tipo_fierro, Av_estribo, s_estribos, zona_critica):
+    """
+    Dibuja el corte lateral derecho de la viga mostrando estribos, cantidad de fierros y doblado
+    """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        return None
+        
+    try:
+        fig, ax = plt.subplots(figsize=(8, 10))
+        
+        # Escala para visualización
+        escala = 1  # 1 unidad = 1 cm
+        
+        # Dimensiones
+        ancho = b
+        alto = h
+        
+        # Dibujar contorno de la viga
+        rect_viga = Rectangle((0, 0), ancho, alto, linewidth=3, edgecolor='black', facecolor='#f0f0f0', alpha=0.8)
+        ax.add_patch(rect_viga)
+        
+        # Dibujar recubrimiento (6 cm desde los bordes)
+        recubrimiento = 6
+        rect_recubrimiento = Rectangle((recubrimiento, recubrimiento), ancho-2*recubrimiento, alto-2*recubrimiento, 
+                                     linewidth=2, edgecolor='red', facecolor='none', linestyle='--', alpha=0.7)
+        ax.add_patch(rect_recubrimiento)
+        
+        # Dibujar estribos
+        if cantidad_fierro > 0 and s_estribos > 0:
+            # Calcular número de estribos que caben en la altura
+            num_estribos_altura = int((alto - 2*recubrimiento) / s_estribos)
+            
+            # Dibujar estribos verticales
+            for i in range(min(num_estribos_altura, 8)):  # Máximo 8 estribos para visualización
+                y = recubrimiento + i * s_estribos
+                if y + 2 <= alto - recubrimiento:  # Verificar que no se salga de la viga
+                    # Estribo vertical izquierdo
+                    estribo_izq = Rectangle((recubrimiento, y), 2, 2, linewidth=1, edgecolor='blue', facecolor='blue', alpha=0.7)
+                    ax.add_patch(estribo_izq)
+                    # Estribo vertical derecho
+                    estribo_der = Rectangle((ancho-recubrimiento-2, y), 2, 2, linewidth=1, edgecolor='blue', facecolor='blue', alpha=0.7)
+                    ax.add_patch(estribo_der)
+                    
+                    # Líneas horizontales del estribo
+                    ax.plot([recubrimiento, ancho-recubrimiento], [y, y], 'b-', linewidth=2, alpha=0.7)
+                    ax.plot([recubrimiento, ancho-recubrimiento], [y+2, y+2], 'b-', linewidth=2, alpha=0.7)
+                    
+                    # Agregar número de estribo
+                    ax.text(ancho/2, y+1, f"{i+1}", ha='center', va='center', fontsize=6, color='white', fontweight='bold')
+        
+        # Dibujar acero longitudinal (barras principales)
+        # Barras inferiores
+        num_barras_inf = 4  # Típicamente 4 barras inferiores
+        for i in range(num_barras_inf):
+            x = recubrimiento + 3 + i * ((ancho - 2*recubrimiento - 6) / (num_barras_inf - 1))
+            y = recubrimiento + 3
+            circulo = plt.Circle((x, y), 1.5, color='orange', alpha=0.8)
+            ax.add_patch(circulo)
+            ax.text(x, y, f"φ{tipo_fierro}", ha='center', va='center', fontsize=8, color='white', fontweight='bold')
+        
+        # Barras superiores
+        num_barras_sup = 2  # Típicamente 2 barras superiores
+        for i in range(num_barras_sup):
+            x = recubrimiento + 3 + i * ((ancho - 2*recubrimiento - 6) / (num_barras_sup - 1))
+            y = alto - recubrimiento - 3
+            circulo = plt.Circle((x, y), 1.5, color='orange', alpha=0.8)
+            ax.add_patch(circulo)
+            ax.text(x, y, f"φ{tipo_fierro}", ha='center', va='center', fontsize=8, color='white', fontweight='bold')
+        
+        # Dibujar doblado de estribos (ganchos)
+        if cantidad_fierro > 0:
+            # Ganchos en la parte superior e inferior
+            for y in [recubrimiento, alto-recubrimiento]:
+                # Gancho izquierdo
+                ax.plot([recubrimiento-3, recubrimiento], [y, y], 'b-', linewidth=2, alpha=0.7)
+                ax.plot([recubrimiento, recubrimiento], [y, y+3], 'b-', linewidth=2, alpha=0.7)
+                # Gancho derecho
+                ax.plot([ancho-recubrimiento, ancho-recubrimiento+3], [y, y], 'b-', linewidth=2, alpha=0.7)
+                ax.plot([ancho-recubrimiento, ancho-recubrimiento], [y, y+3], 'b-', linewidth=2, alpha=0.7)
+                
+                # Agregar anotaciones de doblado
+                ax.text(recubrimiento-4, y+1.5, "90°", ha='center', va='center', fontsize=8, color='blue', fontweight='bold')
+                ax.text(ancho-recubrimiento+4, y+1.5, "90°", ha='center', va='center', fontsize=8, color='blue', fontweight='bold')
+        
+        # Agregar cotas y anotaciones
+        ax.annotate(f'b = {b} cm', xy=(ancho/2, -2), ha='center', fontsize=12, color='blue')
+        ax.annotate(f'h = {h} cm', xy=(ancho+2, alto/2), va='center', fontsize=12, color='blue', rotation=90)
+        ax.annotate(f'd = {d} cm', xy=(ancho+2, d), va='center', fontsize=12, color='red', rotation=90)
+        
+        # Agregar información de estribos
+        ax.text(ancho/2, alto+2, f'Estribos: {cantidad_fierro} φ{tipo_fierro} @ {s_estribos:.1f}cm', 
+                ha='center', fontsize=10, color='blue', fontweight='bold')
+        
+        # Agregar información de zona crítica
+        if zona_critica:
+            ax.text(ancho/2, alto+4, 'ZONA CRÍTICA - Requiere refuerzo', 
+                    ha='center', fontsize=12, color='red', fontweight='bold')
+            ax.text(ancho/2, alto+6, f'Espaciamiento máximo: {s_estribos:.1f} cm', 
+                    ha='center', fontsize=10, color='red')
+        else:
+            ax.text(ancho/2, alto+4, 'ZONA NO CRÍTICA - Estribos mínimos', 
+                    ha='center', fontsize=12, color='green', fontweight='bold')
+            ax.text(ancho/2, alto+6, f'Espaciamiento máximo: {s_estribos:.1f} cm', 
+                    ha='center', fontsize=10, color='green')
+        
+        # Agregar información de doblado
+        ax.text(ancho/2, alto+8, 'Doblado: 90° con ganchos de 6db (ACI 318-19)', 
+                ha='center', fontsize=9, color='blue')
+        
+        # Configurar gráfico
+        ax.set_xlim(-5, ancho+10)
+        ax.set_ylim(-5, alto+12)
+        ax.set_aspect('equal')
+        ax.set_title('Corte Lateral Derecho - Viga con Estribos', fontsize=14, fontweight='bold')
+        ax.set_xlabel('Ancho (cm)')
+        ax.set_ylabel('Altura (cm)')
+        ax.grid(True, alpha=0.3)
+        
+        # Agregar leyenda
+        legend_elements = [
+            Patch(facecolor='orange', alpha=0.8, label='Acero Longitudinal'),
+            Patch(facecolor='blue', alpha=0.7, label='Estribos'),
+            Patch(facecolor='red', alpha=0.3, label='Recubrimiento')
+        ]
+        ax.legend(handles=legend_elements, loc='upper left')
+        
+        plt.tight_layout()
+        return fig
+        
+    except Exception as e:
+        print(f"Error dibujando corte lateral: {str(e)}")
+        return None
+    """
+    Grafica el estribado de la viga según los resultados
+    """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        return None
+        
+    try:
+        fig, ax = plt.subplots(figsize=(15, 8))
+        
+        # Escala para visualización
+        escala = 100  # 1 unidad = 1 cm
+        
+        # Dimensiones de la viga
+        ancho = b / escala
+        alto = d / escala
+        largo = L
+        
+        # Dibujar viga
+        from matplotlib.patches import Rectangle
+        rect_viga = Rectangle((0, 0), largo, alto, linewidth=2, edgecolor='black', facecolor='lightgray', alpha=0.7)
+        ax.add_patch(rect_viga)
+        
+        # Zona crítica (primeros d cm)
+        zona_critica = Rectangle((0, 0), d/100, alto, linewidth=1, edgecolor='red', facecolor='red', alpha=0.2)
+        ax.add_patch(zona_critica)
+        
+        # Zona no crítica
+        zona_no_critica = Rectangle((d/100, 0), largo - d/100, alto, linewidth=1, edgecolor='blue', facecolor='blue', alpha=0.1)
+        ax.add_patch(zona_no_critica)
+        
+        # Dibujar estribos en zona crítica
+        if s_critica > 0:
+            num_estribos_critica = int(d / s_critica)
+            for i in range(num_estribos_critica):
+                x = (d / num_estribos_critica) * i / 100
+                rect_estribo = Rectangle((x, 0), 0.05, alto, linewidth=1, edgecolor='red', facecolor='red', alpha=0.5)
+                ax.add_patch(rect_estribo)
+        
+        # Dibujar estribos en zona no crítica
+        if s_no_critica > 0:
             num_estribos_no_critica = int((L*100 - d) / s_no_critica)
             for i in range(num_estribos_no_critica):
                 x = d/100 + (s_no_critica / 100) * i
@@ -4831,8 +5036,47 @@ Plan: Gratuito
                     with col3:
                         st.metric("Luz del Elemento", f"{L_corte_mccormac} m")
                 
-                # Dibujo de la viga de corte
-                st.subheader("✂️ Dibujo del Elemento a Corte")
+                # Dibujo del corte lateral derecho con estribos detallados
+                st.subheader("✂️ Corte Lateral Derecho - Viga con Estribos")
+                
+                # Obtener resultados de corte desde session state
+                if 'resultados_corte' in st.session_state and 'datos_entrada_corte' in st.session_state:
+                    resultados_corte = st.session_state['resultados_corte']
+                    datos_entrada = st.session_state['datos_entrada_corte']
+                    
+                    # Dibujar corte lateral derecho con estribos detallados
+                    fig_corte_lateral = dibujar_corte_lateral_derecho(
+                        b=datos_entrada['b'],
+                        h=datos_entrada['h'],
+                        d=datos_entrada['d'],
+                        cantidad_fierro=datos_entrada['cantidad_fierro'],
+                        tipo_fierro=datos_entrada['tipo_fierro'],
+                        Av_estribo=datos_entrada['Av_estribo'],
+                        s_estribos=resultados_corte.get('s_estribos', 20),
+                        zona_critica=resultados_corte.get('zona_critica', False)
+                    )
+                    
+                    if fig_corte_lateral:
+                        st.pyplot(fig_corte_lateral)
+                        
+                        # Información adicional del estribado
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.info(f"**Cantidad de Fierro:** {datos_entrada['cantidad_fierro']}")
+                            st.info(f"**Tipo de Fierro:** {datos_entrada['tipo_fierro']}")
+                            st.info(f"**Área del Estribo:** {datos_entrada['Av_estribo']} cm²")
+                        
+                        with col2:
+                            st.info(f"**Espaciamiento:** {resultados_corte.get('s_estribos', 0):.1f} cm")
+                            st.info(f"**Zona Crítica:** {'Sí' if resultados_corte.get('zona_critica', False) else 'No'}")
+                            st.info(f"**Doblado:** 90° con ganchos de 6db")
+                    else:
+                        st.warning("⚠️ No se pudo generar el gráfico del corte lateral")
+                else:
+                    st.warning("⚠️ No hay resultados de corte disponibles. Realiza primero el cálculo.")
+                
+                # Dibujo de la viga de corte (original)
+                st.subheader("🏗️ Vista Longitudinal de la Viga")
                 
                 # Obtener resultados de corte desde session state
                 if 'resultados_corte' in st.session_state:
