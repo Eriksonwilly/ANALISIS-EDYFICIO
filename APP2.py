@@ -898,8 +898,8 @@ Generado por: CONSORCIO DEJ
         ]
         tabla = Table(tabla_sismico, colWidths=[200, 80, 200])
         tabla.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.7, 0.8, 1.0)),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(0, 0, 0)),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
         elements.append(tabla)
@@ -924,7 +924,7 @@ Generado por: CONSORCIO DEJ
     tabla = Table(parametros_tabla, colWidths=[200, 100, 150])
     tabla.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('GRID', (0, 0), (-1, -1), 1, colors.Color(0, 0, 0)),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
     ]))
     elements.append(tabla)
@@ -947,7 +947,7 @@ Generado por: CONSORCIO DEJ
     tabla = Table(datos_tabla, colWidths=[200, 100, 80])
     tabla.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('GRID', (0, 0), (-1, -1), 1, colors.Color(0, 0, 0)),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
     ]))
     elements.append(tabla)
@@ -988,7 +988,7 @@ Generado por: CONSORCIO DEJ
         tabla_props = Table(props_tabla, colWidths=[200, 100, 80])
         tabla_props.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(0, 0, 0)),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
         elements.append(tabla_props)
@@ -1035,7 +1035,7 @@ Generado por: CONSORCIO DEJ
         tabla_dim = Table(dim_tabla, colWidths=[200, 100, 80])
         tabla_dim.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(0, 0, 0)),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
         elements.append(tabla_dim)
