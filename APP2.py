@@ -4674,64 +4674,81 @@ Plan: Gratuito
                 
                 # Dibujo de la viga de corte
                 st.subheader("✂️ Dibujo del Elemento a Corte")
-                fig_corte = dibujar_viga(b_corte, d_corte, L_corte_mccormac, 0, resultados_corte['s_estribos'], fc_corte, fy_corte)
-                if fig_corte:
-                    st.pyplot(fig_corte)
+                
+                # Obtener resultados de corte desde session state
+                if 'resultados_corte' in st.session_state:
+                    resultados_corte = st.session_state['resultados_corte']
+                    # Calcular área de acero aproximada (2% del área de la sección)
+                    As_aproximada = 0.02 * b_corte * d_corte
+                    
+                    fig_corte = dibujar_viga(b_corte, d_corte, L_corte_mccormac, As_aproximada, 
+                                           resultados_corte.get('s_estribos', 20), fc_corte, fy_corte)
+                    if fig_corte:
+                        st.pyplot(fig_corte)
+                else:
+                    st.warning("⚠️ No hay resultados de corte disponibles. Realiza primero el cálculo.")
                 
                 # Gráficos adicionales si matplotlib está disponible
                 if MATPLOTLIB_AVAILABLE and plt is not None:
                     try:
-                        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 10))
-                        
-                        # Gráfico 1: Propiedades del ejercicio
-                        propiedades = ['Vu (ton)', 'φVc (ton)', 'Vs (ton)', 's_estribos (cm)']
-                        valores = [Vu_corte/1000, resultados_corte['phiVc']/1000, 
-                                 resultados_corte['Vs_requerido']/1000, resultados_corte['s_estribos']]
-                        color_list = ['#2E8B57', '#DC143C', '#4169E1', '#FFD700']
-                        
-                        bars1 = ax1.bar(propiedades, valores, color=color_list)
-                        ax1.set_title("Propiedades del Ejercicio de Corte")
-                        ax1.set_ylabel("Valor")
-                        
-                        for bar in bars1:
-                            height = bar.get_height()
-                            ax1.text(bar.get_x() + bar.get_width()/2., height + 0.01,
-                                   f'{height:.2f}', ha='center', va='bottom')
-                        
-                        # Gráfico 2: Comparación con PDF
-                        fuentes = ['Cálculo Actual', 'Valor del PDF']
-                        valores_pdf = [resultados_corte['phiVc']/1000, 8.86]
-                        colors_pdf = ['#2E8B57', '#4169E1']
-                        
-                        bars2 = ax2.bar(fuentes, valores_pdf, color=colors_pdf)
-                        ax2.set_title("Comparación con Valores del PDF")
-                        ax2.set_ylabel("φVc (ton)")
-                        
-                        for bar in bars2:
-                            height = bar.get_height()
-                            ax2.text(bar.get_x() + bar.get_width()/2., height + 0.1,
-                                   f'{height:.2f}', ha='center', va='bottom')
-                        
-                        # Gráfico 3: Estado de la zona
-                        estado_zona = 'Crítica' if resultados_corte['zona_critica'] else 'No Crítica'
-                        color_zona = '#DC143C' if resultados_corte['zona_critica'] else '#2E8B57'
-                        
-                        ax3.pie([1], labels=[estado_zona], autopct='%1.1f%%', colors=[color_zona])
-                        ax3.set_title("Estado de la Zona de Corte")
-                        
-                        # Gráfico 4: Factor de seguridad
-                        FS_corte = Vu_corte / resultados_corte['phiVc']
-                        ax4.bar(['Factor de Seguridad'], [FS_corte], 
-                               color='#2E8B57' if FS_corte >= 1.0 else '#DC143C')
-                        ax4.set_title("Factor de Seguridad")
-                        ax4.set_ylabel("Valor")
-                        ax4.axhline(y=1.0, color='red', linestyle='--', label='Límite de Seguridad')
-                        ax4.text(0, FS_corte + 0.05, f'{FS_corte:.2f}', ha='center', va='bottom')
-                        ax4.legend()
-                        
-                        if plt is not None:
-                            plt.tight_layout()
-                            st.pyplot(fig)
+                        # Verificar que tenemos resultados de corte
+                        if 'resultados_corte' in st.session_state:
+                            resultados_corte = st.session_state['resultados_corte']
+                            
+                            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 10))
+                            
+                            # Gráfico 1: Propiedades del ejercicio
+                            propiedades = ['Vu (ton)', 'φVc (ton)', 'Vs (ton)', 's_estribos (cm)']
+                            valores = [Vu_corte/1000, resultados_corte.get('phiVc', 0)/1000, 
+                                     resultados_corte.get('Vs_requerido', 0)/1000, resultados_corte.get('s_estribos', 0)]
+                            color_list = ['#2E8B57', '#DC143C', '#4169E1', '#FFD700']
+                            
+                            bars1 = ax1.bar(propiedades, valores, color=color_list)
+                            ax1.set_title("Propiedades del Ejercicio de Corte")
+                            ax1.set_ylabel("Valor")
+                            
+                            for bar in bars1:
+                                height = bar.get_height()
+                                ax1.text(bar.get_x() + bar.get_width()/2., height + 0.01,
+                                       f'{height:.2f}', ha='center', va='bottom')
+                            
+                            # Gráfico 2: Comparación con PDF
+                            fuentes = ['Cálculo Actual', 'Valor del PDF']
+                            valores_pdf = [resultados_corte.get('phiVc', 0)/1000, 8.86]
+                            colors_pdf = ['#2E8B57', '#4169E1']
+                            
+                            bars2 = ax2.bar(fuentes, valores_pdf, color=colors_pdf)
+                            ax2.set_title("Comparación con Valores del PDF")
+                            ax2.set_ylabel("φVc (ton)")
+                            
+                            for bar in bars2:
+                                height = bar.get_height()
+                                ax2.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                                       f'{height:.2f}', ha='center', va='bottom')
+                            
+                            # Gráfico 3: Estado de la zona
+                            estado_zona = 'Crítica' if resultados_corte.get('zona_critica', False) else 'No Crítica'
+                            color_zona = '#DC143C' if resultados_corte.get('zona_critica', False) else '#2E8B57'
+                            
+                            ax3.pie([1], labels=[estado_zona], autopct='%1.1f%%', colors=[color_zona])
+                            ax3.set_title("Estado de la Zona de Corte")
+                            
+                            # Gráfico 4: Factor de seguridad
+                            phiVc = resultados_corte.get('phiVc', 1)  # Evitar división por cero
+                            FS_corte = Vu_corte / phiVc if phiVc > 0 else 0
+                            ax4.bar(['Factor de Seguridad'], [FS_corte], 
+                                   color='#2E8B57' if FS_corte >= 1.0 else '#DC143C')
+                            ax4.set_title("Factor de Seguridad")
+                            ax4.set_ylabel("Valor")
+                            ax4.axhline(y=1.0, color='red', linestyle='--', label='Límite de Seguridad')
+                            ax4.text(0, FS_corte + 0.05, f'{FS_corte:.2f}', ha='center', va='bottom')
+                            ax4.legend()
+                            
+                            if plt is not None:
+                                plt.tight_layout()
+                                st.pyplot(fig)
+                        else:
+                            st.warning("⚠️ No hay resultados de corte disponibles para generar gráficos.")
                         
                     except Exception as e:
                         st.info(f"📊 Gráfico no disponible: {str(e)}")
