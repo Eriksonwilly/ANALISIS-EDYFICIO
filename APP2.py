@@ -654,94 +654,98 @@ Generado por: CONSORCIO DEJ
         elements.append(Spacer(1, 10))
     elements.append(Paragraph("DIPLOMATURA DE ESTUDIO EN DISEÑO ESTRUCTURAL", styleH))
     elements.append(Spacer(1, 30))
-    elements.append(Paragraph("<b>ANÁLISIS Y DISEÑO DE UN EDIFICIO DE CONCRETO ARMADO</b>", styleH2))
+    elements.append(Paragraph("<b>ANÁLISIS Y DISEÑO DE UN EDIFICIO DE 3 NIVELES PARA SERVICIOS PÚBLICOS</b>", styleH2))
     elements.append(Spacer(1, 20))
-    elements.append(Paragraph(f"<b>Reporte Técnico Premium</b>", styleH2))
+    elements.append(Paragraph("<b>Tarea N° 03</b>", styleH2))
     elements.append(Spacer(1, 20))
-    elements.append(Paragraph(f"<b>Integrante:</b> {datos_entrada.get('autor', 'Usuario de la App')}<br/><b>Fecha:</b> {datetime.now().strftime('%d/%m/%Y')}", styleN))
+    elements.append(Paragraph(f"<b>Integrante:</b> Rey Romulo Peñaloza Condori<br/><b>Fecha:</b> {datetime.now().strftime('%d/%m/%Y')}", styleN))
     elements.append(Spacer(1, 20))
     elements.append(Paragraph("<b>Software:</b> CONSORCIO DEJ - Streamlit + Python", styleN))
     elements.append(Spacer(1, 120))
-    elements.append(Paragraph("<b>Docentes:</b> José Antonio Chávez Ángeles, Gianfranco Otazzi Pasino", styleN))
+    elements.append(Paragraph("<b>Profesores:</b> José Antonio Chávez Ángeles, Gianfranco Otazzi Pasino", styleN))
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph("<b>Junio del 2021</b>", styleN))
     elements.append(PageBreak())
-
-    # Índice detallado profesional
-    elements.append(Paragraph("<b>CONTENIDO</b>", styleH))
-    indice = [
-        ["1. INTRODUCCIÓN", "5"],
-        ["2. OBJETIVOS", "5"],
-        ["3. NORMATIVA A UTILIZAR", "5"],
-        ["4. SOFTWARE A UTILIZAR", "5"],
-        ["5. PARÁMETROS SÍSMICOS", "6"],
-        ["5.1 Factor de Zona (Z)", "6"],
-        ["5.2 Categoría de las Edificaciones y Factor de Uso (U)", "6"],
-        ["5.3 Condiciones Geotécnicas, Factor de Suelo (S)", "7"],
-        ["5.4 Coeficiente de Amplificación Sísmica (C)", "8"],
-        ["5.5 Sistemas Estructurales y Coeficiente Básico de Reducción (R0)", "9"],
-        ["5.6 Aceleración Espectral", "10"],
-        ["5.7 Límites para la distorsión de entrepiso", "10"],
-        ["6. PARÁMETROS DEL PROYECTO", "11"],
-        ["7. COMBINACIONES DE CARGA A UTILIZAR", "13"],
-        ["8. MODELAMIENTO DE LA EDIFICACIÓN", "13"],
-        ["8.1 Propiedades de los materiales", "13"],
-        ["8.2 Creación de los Elementos Estructurales", "15"],
-        ["8.3 Modelamiento de la Edificación", "16"],
-        ["8.4 Asignación de Cargas en Losa y Vigas", "18"],
-        ["9. ASIGNACIÓN DE PARÁMETROS", "24"],
-        ["9.1 Patrones de cargas asignados", "24"],
-        ["9.2 Definición del Sismo Estático X e Y", "25"],
-        ["9.3 Definición del Espectro de Respuesta", "25"],
-        ["10. RESULTADOS DEL ANÁLISIS", "30"],
-        ["10.1 Cortante en la Base del Sismo Estático", "30"],
-        ["10.2 Reacciones en la Base por Sismo Estático", "30"],
-        ["10.3 Reacciones en la Base por Sismo Dinámico", "30"],
-        ["10.4 Fuerzas en los pisos por Sismo Estático", "30"],
-        ["10.5 Fuerzas en los pisos por Sismo Dinámico", "31"],
-        ["10.6 Masas Participativas", "31"],
-        ["10.7 Fuerza Cortante que absorben los pórticos eje X", "35"],
-        ["10.8 Fuerza Cortante que absorben los pórticos eje Y", "36"],
-        ["10.9 Derivas de Entre piso eje X", "38"],
-        ["10.10 Derivas de Entre piso eje Y", "38"],
-        ["10.11 Diagramas de los Resultados Obtenidos", "38"],
-        ["10.12 Diagramas de Fuerzas Axiales (ejes 1-1 y 4-4)", "40"],
-        ["10.13 Diagramas de Fuerzas Cortantes (ejes 1-1 y 4-4)", "41"],
-        ["10.14 Diagramas de Momentos Flectores (ejes 1-1 y 4-4)", "41"],
-        ["10.15 Diagramas de Fuerzas Axiales (ejes 2-2 y 3-3)", "42"],
-        ["10.16 Diagramas de Fuerzas Cortantes (ejes 2-2 y 3-3)", "42"],
-        ["10.17 Diagramas de Momentos Flectores (ejes 2-2 y 3-3)", "43"],
-        ["10.18 Diagramas de Cortantes en la Base SestX y SestY", "43"],
-        ["10.19 Diagramas de Cortantes en la Base SdinX y SdinY", "44"],
-        ["10.20 Comprobación que la Cortante Dinámica sea el 80% de la Cortante Estática", "45"],
-        ["11. DISEÑO ESTRUCTURAL DE VIGAS", "46"],
-        ["11.1 Diseño de Viga V3 (eje A y D) en piso típico", "47"],
-        ["11.1.1 Diseño por Flexión", "48"],
-        ["11.1.2 Diseño para el apoyo 2 y 3", "49"],
-        ["11.1.3 Diseño por Cortante", "50"],
-        ["11.2 Diseño de Viga V4 (eje B y C) en piso típico", "52"],
-        ["11.2.1 Diseño por Flexión", "53"],
-        ["11.2.2 Diseño para el tramo 1-2 y 3-4", "55"],
-        ["11.2.3 Diseño para el apoyo 2 y 3", "55"],
-        ["11.2.4 Diseño por Cortante", "56"],
-        ["12. DISEÑO ESTRUCTURAL DE COLUMNAS", "59"],
-        ["12.1 Diseño en la Columna A – 1", "59"],
-        ["12.1.1 Cargas actuantes en la Columna del eje A – 1", "62"],
-        ["12.1.2 Diseño por corte eje A – 1", "64"],
-        ["12.1.3 Cargas actuantes en la Columna del eje B – 1", "66"],
-        ["12.1.4 Diseño por corte eje B – 1", "69"],
-        ["12.1.5 Cargas actuantes en la Columna del eje B – 2", "71"],
-        ["12.1.6 Diseño por corte eje B –2", "73"],
-        ["13. DISEÑO ESTRUCTURAL DE ZAPATAS", "75"],
-        ["13.1 Diseño de Zapata Aislada Excéntrica A-1", "75"],
-        ["14. CONCLUSIONES", "77"]
+    
+    # Tabla de Contenido
+    elements.append(Paragraph("CONTENIDO", styleH))
+    elements.append(Spacer(1, 10))
+    
+    contenido_items = [
+        "1. INTRODUCCIÓN",
+        "2. OBJETIVOS", 
+        "3. NORMATIVA A UTILIZAR",
+        "4. SOFTWARE A UTILIZAR",
+        "5. PARÁMETROS SÍSMICOS",
+        "   5.1 Factor de Zona (Z)",
+        "   5.2 Categoría de las Edificaciones y Factor de Uso (U)",
+        "   5.3 Condiciones Geotécnicas, Factor de Suelo (S)",
+        "   5.4 Coeficiente de Amplificación Sísmica (C)",
+        "   5.5 Sistemas Estructurales y Coeficiente Básico de Reducción (R0)",
+        "   5.6 Aceleración Espectral",
+        "   5.7 Límites para la distorsión de entrepiso",
+        "6. PARÁMETROS DEL PROYECTO",
+        "7. COMBINACIONES DE CARGA A UTILIZAR",
+        "8. MODELAMIENTO DE LA EDIFICACIÓN",
+        "   8.1 Propiedades de los materiales",
+        "   8.2 Creación de los Elementos Estructurales",
+        "   8.3 Modelamiento de la Edificación",
+        "   8.4 Asignación de Cargas en Losa y Vigas",
+        "9. ASIGNACIÓN DE PARÁMETROS",
+        "   9.1 Patrones de cargas asignados",
+        "   9.2 Definición del Sismo Estático X e Y",
+        "   9.3 Definición del Espectro de Respuesta",
+        "10. RESULTADOS DEL ANÁLISIS",
+        "   10.1 Cortante en la Base del Sismo Estático",
+        "   10.2 Reacciones en la Base por Sismo Estático",
+        "   10.3 Reacciones en la Base por Sismo Dinámico",
+        "   10.4 Fuerzas en los pisos por Sismo Estático",
+        "   10.5 Fuerzas en los pisos por Sismo Dinámico",
+        "   10.6 Masas Participativas",
+        "   10.7 Fuerza Cortante que absorben los pórticos eje X",
+        "   10.8 Fuerza Cortante que absorben los pórticos eje Y",
+        "   10.9 Derivas de Entre piso eje X",
+        "   10.10 Derivas de Entre piso eje Y",
+        "   10.11 Diagramas de los Resultados Obtenidos",
+        "   10.12 Diagramas de Fuerzas Axiales (ejes 1-1 y 4-4)",
+        "   10.13 Diagramas de Fuerzas Cortantes (ejes 1-1 y 4-4)",
+        "   10.14 Diagramas de Momentos Flectores (ejes 1-1 y 4-4)",
+        "   10.15 Diagramas de Fuerzas Axiales (ejes 2-2 y 3-3)",
+        "   10.16 Diagramas de Fuerzas Cortantes (ejes 2-2 y 3-3)",
+        "   10.17 Diagramas de Momentos Flectores (ejes 2-2 y 3-3)",
+        "   10.18 Diagramas de Cortantes en la Base SestX y SestY",
+        "   10.19 Diagramas de Cortantes en la Base SdinX y SdinY",
+        "   10.20 Comprobación que la Cortante Dinámica sea el 80% de la Cortante Estática",
+        "11. DISEÑO ESTRUCTURAL DE VIGAS",
+        "   11.1 Diseño de Viga V3 (eje A y D) en piso típico",
+        "   11.1.1 Diseño por Flexión",
+        "   11.1.2 Diseño para el apoyo 2 y 3",
+        "   11.1.3 Diseño por Cortante",
+        "   11.2 Diseño de Viga V4 (eje B y C) en piso típico",
+        "   11.2.1 Diseño por Flexión",
+        "   11.2.2 Diseño para el tramo 1-2 y 3-4",
+        "   11.2.3 Diseño para el apoyo 2 y 3",
+        "   11.2.4 Diseño por Cortante",
+        "12. DISEÑO ESTRUCTURAL DE COLUMNAS",
+        "   12.1 Diseño en la Columna A – 1",
+        "   12.1.1 Cargas actuantes en la Columna del eje A – 1",
+        "   12.1.2 Diseño por corte eje A – 1",
+        "   12.1.3 Cargas actuantes en la Columna del eje B – 1",
+        "   12.1.4 Diseño por corte eje B – 1",
+        "   12.1.5 Cargas actuantes en la Columna del eje B – 2",
+        "   12.1.6 Diseño por corte eje B –2",
+        "13. DISEÑO ESTRUCTURAL DE ZAPATAS",
+        "   13.1 Diseño de Zapata Aislada Excéntrica A-1",
+        "14. CONCLUSIONES"
     ]
-    tabla_indice = Table(indice, colWidths=[350, 50])
-    tabla_indice.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 11),
-        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-    ]))
-    elements.append(tabla_indice)
+    
+    for item in contenido_items:
+        if item.startswith("   "):
+            elements.append(Paragraph(item, styleN))
+        else:
+            elements.append(Paragraph(item, styleH2))
+        elements.append(Spacer(1, 2))
+    
     elements.append(PageBreak())
 
     # Tabla de Figuras
@@ -797,56 +801,88 @@ Generado por: CONSORCIO DEJ
 
     # 1. Introducción
     elements.append(Paragraph("1. INTRODUCCIÓN", styleH))
-    elements.append(Paragraph("Este reporte presenta el análisis y diseño estructural completo de un edificio de concreto armado, siguiendo la normativa peruana RNE E.060 (Concreto Armado) y E.030 (Diseño Sismorresistente), así como referencias internacionales como ACI 318-19. El análisis incluye modelamiento estructural, análisis sísmico estático y dinámico, diseño de elementos estructurales y verificaciones de seguridad.", styleN))
+    elements.append(Paragraph("En la presente memoria de cálculo a presentar se pide realizar el análisis y diseño de un edificio de 3 niveles destinado a Servicios Públicos. Ya que, según el planteamiento estructural, el funcionamiento satisface las exigencias estructurales considerándose el proceso constructivo, seguridad, funcionalidad en términos estructurales.", styleN))
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph("La concepción del modelo estructural pretende sintetizar las características reales del proyecto, con una configuración estructural capaz de resistir las distintas solicitaciones de carga a la que estará sometida la estructura durante su vida de servicio. El modelo considerado para el presente proyecto está representado por elementos tipo frame, compuestas por el sistema de vigas, columnas, losas.", styleN))
     elements.append(Spacer(1, 10))
     elements.append(PageBreak())
 
     # 2. Objetivos
     elements.append(Paragraph("2. OBJETIVOS", styleH))
-    elements.append(Paragraph("• Presentar el proceso completo de análisis estructural desde el modelamiento hasta el diseño final.\n• Realizar análisis sísmico estático y dinámico según RNE E.030.\n• Diseñar elementos estructurales (vigas, columnas, zapatas) según RNE E.060.\n• Verificar la seguridad estructural y cumplimiento de normativas.\n• Generar documentación técnica profesional para tesis o informes técnicos.\n• Proporcionar gráficos y diagramas de fuerzas internas para validación.", styleN))
+    elements.append(Paragraph("El objetivo principal del análisis y calculo estructural es la de realizar el diseño de los elementos estructurales que componen dicho sistema estructural (vigas, columnas, losas y cimentación).", styleN))
     elements.append(Spacer(1, 10))
     elements.append(PageBreak())
 
     # 3. Normativa a Utilizar
     elements.append(Paragraph("3. NORMATIVA A UTILIZAR", styleH))
-    elements.append(Paragraph("• RNE E.060: Norma de Concreto Armado (2019)\n• RNE E.030: Norma de Diseño Sismorresistente (2018)\n• ACI 318-19: Building Code Requirements for Structural Concrete\n• Referencias bibliográficas:\n  - McCormac, J.C. - Diseño de Estructuras de Concreto\n  - Nilson, A.H. - Diseño de Estructuras de Concreto\n  - Hibbeler, R.C. - Análisis Estructural\n  - Blanco Blasco, A. - Estructuras de Concreto Armado", styleN))
+    elements.append(Paragraph("Para el análisis se hace uso del Reglamento Nacional de Edificaciones, con las siguientes normas:", styleN))
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph("• Norma Técnica de Edificaciones E – 020 Cargas", styleN))
+    elements.append(Paragraph("• Norma Técnica de Edificaciones E – 030 Diseño Sismo Resistente", styleN))
+    elements.append(Paragraph("• Norma Técnica de Edificaciones E – 060 Concreto Armado", styleN))
     elements.append(Spacer(1, 10))
     elements.append(PageBreak())
 
     # 4. Software a Utilizar
     elements.append(Paragraph("4. SOFTWARE A UTILIZAR", styleH))
-    elements.append(Paragraph("• CONSORCIO DEJ - Aplicación de Análisis Estructural (Streamlit + Python)\n• Bibliotecas de cálculo: NumPy, Pandas, Matplotlib\n• Generación de reportes: ReportLab\n• Visualización: Plotly, Matplotlib\n• Análisis estructural: Cálculos manuales según normativas\n• Validación: Comparación con software comerciales (ETABS, SAP2000)", styleN))
+    elements.append(Paragraph("Para el siguiente análisis de la estructura el software empleado es CONSORCIO DEJ - Aplicación de Análisis Estructural (Streamlit + Python), con validación mediante comparación con software comerciales como ETABS v18, AutoCAD 2018 y Revit 2020.", styleN))
     elements.append(Spacer(1, 10))
     elements.append(PageBreak())
 
     # 5. Parámetros Sísmicos
     elements.append(Paragraph("5. PARÁMETROS SÍSMICOS", styleH))
     elements.append(Paragraph("5.1 Factor de Zona (Z)", styleH2))
-    elements.append(Paragraph("Según RNE E.030, el factor de zona sísmica se define según la ubicación geográfica del proyecto. Los valores típicos son: Z1=0.10, Z2=0.15, Z3=0.25, Z4=0.35.", styleN))
+    elements.append(Paragraph("La Norma NTE E.030, considera el territorio nacional dividido en cuatro zonas sísmicas. A cada una se le asigna una aceleración en la base rocosa, la que se denomina factor Z (aceleración máxima con una probabilidad de 10% de ser excedida en 50 años). Esta aceleración corresponde al tiempo de exposición y peligro aceptados para edificios comunes. Para la zona que corresponde a este proyecto le corresponde el valor considerado de 0.35, que corresponde a Ayacucho (ZONA 3).", styleN))
     elements.append(Spacer(1, 5))
     
     elements.append(Paragraph("5.2 Categoría de las Edificaciones y Factor de Uso (U)", styleH2))
-    elements.append(Paragraph("El factor de uso depende de la categoría de la edificación: Categoría A (U=1.0), Categoría B (U=1.2), Categoría C (U=1.5).", styleN))
+    elements.append(Paragraph("Según el Capítulo III, Artículo 15 \"Categoría de las Edificaciones y Factor de Uso\", de la Norma Técnica E – 030 \"Diseño Sismorresistente\" del Reglamento Nacional de Edificaciones.", styleN))
     elements.append(Spacer(1, 5))
     
     elements.append(Paragraph("5.3 Condiciones Geotécnicas, Factor de Suelo (S)", styleH2))
-    elements.append(Paragraph("Según el perfil de suelo: S1=0.8 (suelo rígido), S2=1.0 (suelo intermedio), S3=1.2 (suelo flexible), S4=1.4 (suelo muy flexible).", styleN))
+    elements.append(Paragraph("Según el Capítulo II, Articulo 12 \"Condiciones Geotécnicas\", de la Norma Técnica E – 030 \"Diseño Sismorresistente\" del Reglamento Nacional de Edificaciones tenemos los siguientes tipos de perfiles de suelos detallados a continuación:", styleN))
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph("Tabla 1. Clasificación de los Perfiles del Suelo:", styleN))
+    elements.append(Paragraph("Perfil S0: Roca dura (Vs > 1500 m/s)", styleN))
+    elements.append(Paragraph("Perfil S1: Roca o suelos muy rígidos (Vs = 500-1500 m/s, N60 > 50, Su > 100 kPa)", styleN))
+    elements.append(Paragraph("Perfil S2: Suelos intermedios (Vs = 180-500 m/s, N60 = 15-50, Su = 50-100 kPa)", styleN))
+    elements.append(Paragraph("Perfil S3: Suelos blandos (Vs < 180 m/s, N60 < 15, Su = 25-50 kPa)", styleN))
+    elements.append(Paragraph("Perfil S4: Condiciones excepcionales", styleN))
     elements.append(Spacer(1, 5))
     
     elements.append(Paragraph("5.4 Coeficiente de Amplificación Sísmica (C)", styleH2))
-    elements.append(Paragraph("Se calcula según el período fundamental de la estructura y los parámetros del suelo. Valores típicos entre 1.5 y 2.5.", styleN))
+    elements.append(Paragraph("En el Capítulo II, Articulo 14 \"Coeficiente de Amplificación Sísmica (C)\" de la Norma Técnica E – 030 \"Diseño Sismorresistente\":", styleN))
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph("Si: T < TP → C = 2.5", styleN))
+    elements.append(Paragraph("Si: TP < T < TL → C = 2.5 (TP/T)", styleN))
+    elements.append(Paragraph("Si: T > TL → C = 2.5 (TP·TL)/T²", styleN))
     elements.append(Spacer(1, 5))
     
     elements.append(Paragraph("5.5 Sistemas Estructurales y Coeficiente Básico de Reducción (R0)", styleH2))
-    elements.append(Paragraph("Depende del sistema estructural: Pórticos (R0=8), Muros (R0=6), Dual (R0=7).", styleN))
+    elements.append(Paragraph("En el Capítulo III, Articulo 18 \"Sistemas Estructurales y Coeficiente Básico de Reducción de las Fuerzas Sísmicas (R0)\" de la Norma Técnica E – 030 \"Diseño Sismorresistente\":", styleN))
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph("Concreto Armado:", styleN))
+    elements.append(Paragraph("• Pórticos: R0 = 8", styleN))
+    elements.append(Paragraph("• Dual: R0 = 7", styleN))
+    elements.append(Paragraph("• De muros estructurales: R0 = 6", styleN))
+    elements.append(Paragraph("• Muros de ductilidad limitada: R0 = 4", styleN))
     elements.append(Spacer(1, 5))
     
     elements.append(Paragraph("5.6 Aceleración Espectral", styleH2))
-    elements.append(Paragraph("Se calcula como: Sa = Z·U·C·S·g/R, donde g es la aceleración de la gravedad.", styleN))
+    elements.append(Paragraph("En el Capítulo IV, Artículo 29.2 \"Aceleración Espectral\" de la Norma Técnica E-030 \"Diseño Sismorresistente\" menciona que, para cada una de las direcciones horizontales analizadas se utiliza un espectro inelástico de Pseudo – aceleración definido por:", styleN))
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph("Sa = (Z·U·C·S/R) · g", styleN))
     elements.append(Spacer(1, 5))
     
     elements.append(Paragraph("5.7 Límites para la distorsión de entrepiso", styleH2))
-    elements.append(Paragraph("Según RNE E.030: Δ/h ≤ 0.007 para estructuras regulares.", styleN))
+    elements.append(Paragraph("En el Capítulo V, Artículo 32 \"Desplazamientos Laterales relativos admisibles\" de la Norma Técnica E-030 \"Diseño Sismorresistente\" el máximo desplazamiento relativo de entrepiso, calculado según el artículo 31, no excede la fracción de la altura de entrepiso (distorsión) que se indica en la siguiente tabla:", styleN))
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph("Material predominante → (Δ/hei):", styleN))
+    elements.append(Paragraph("• Concreto armado: 0.007", styleN))
+    elements.append(Paragraph("• Acero: 0.010", styleN))
+    elements.append(Paragraph("• Albañilería: 0.005", styleN))
+    elements.append(Paragraph("• Madera: 0.010", styleN))
+    elements.append(Paragraph("• Edificios de concreto armado con muros de ductilidad limitada: 0.005", styleN))
     elements.append(Spacer(1, 10))
     
     if resultados and 'analisis_sismico' in resultados:
@@ -869,8 +905,33 @@ Generado por: CONSORCIO DEJ
         elements.append(tabla)
     elements.append(PageBreak())
 
-    # 6. Datos de Entrada
-    elements.append(Paragraph("6. DATOS DE ENTRADA", styleH))
+    # 6. Parámetros del Proyecto
+    elements.append(Paragraph("6. PARÁMETROS DEL PROYECTO", styleH))
+    elements.append(Paragraph("El proyecto a realizarse se encuentra ubicado en la provincia de Huamanga, departamento de Ayacucho, teniendo así los siguientes datos:", styleN))
+    elements.append(Spacer(1, 5))
+    
+    # Tabla de parámetros del proyecto
+    parametros_tabla = [
+        ["Parámetro", "Valor", "Descripción"],
+        ["Zona Sísmica", "Zona 03", "Z = 0.35"],
+        ["Perfil de Suelo", "S3", "S = 1.20"],
+        ["Factor de Uso", "C", "U = 1.00"],
+        ["Coeficiente de Reducción X", "Rx", "R0 = 8.00"],
+        ["Coeficiente de Reducción Y", "Ry", "R0 = 6.00"],
+        ["Período Tp", "", "Tp = 1.00 seg"],
+        ["Período TL", "", "TL = 1.60 seg"]
+    ]
+    tabla = Table(parametros_tabla, colWidths=[200, 100, 150])
+    tabla.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+    ]))
+    elements.append(tabla)
+    elements.append(Spacer(1, 10))
+    
+    # Datos de entrada adicionales
+    elements.append(Paragraph("Datos de Entrada del Análisis:", styleH2))
     datos_tabla = [
         ["Parámetro", "Valor", "Unidad"],
         ["Resistencia del concreto (f'c)", f"{datos_entrada.get('f_c', 0)}", "kg/cm²"],
@@ -885,7 +946,7 @@ Generado por: CONSORCIO DEJ
     ]
     tabla = Table(datos_tabla, colWidths=[200, 100, 80])
     tabla.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
     ]))
@@ -893,8 +954,27 @@ Generado por: CONSORCIO DEJ
     elements.append(Spacer(1, 10))
     elements.append(PageBreak())
 
-    # 7. Propiedades de los Materiales
-    elements.append(Paragraph("7. PROPIEDADES DE LOS MATERIALES", styleH))
+    # 7. Combinaciones de Carga a Utilizar
+    elements.append(Paragraph("7. COMBINACIONES DE CARGA A UTILIZAR", styleH))
+    elements.append(Paragraph("Z = 0.35, S = 1.20, U = 1.00, Rx = 8 (Sistema Aporticado), Ry = 6 (Muros Estructurales)", styleN))
+    elements.append(Paragraph("Tp = 1.00 seg, TL = 1.60 seg", styleN))
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph("C = 2.50", styleN))
+    elements.append(Paragraph("Vx = ZUCS/R = 0.13125", styleN))
+    elements.append(Paragraph("Vy = ZUCS/R = 0.17500", styleN))
+    elements.append(Spacer(1, 10))
+    elements.append(PageBreak())
+
+    # 8. Modelamiento de la Edificación
+    elements.append(Paragraph("8. MODELAMIENTO DE LA EDIFICACIÓN", styleH))
+    elements.append(Paragraph("El modelamiento de la edificación se da inicio con la definición de los materiales (f'c, fy), como se muestra en la figura:", styleN))
+    elements.append(Spacer(1, 5))
+    
+    elements.append(Paragraph("8.1 Propiedades de los materiales", styleH2))
+    elements.append(Paragraph("En el presente punto se desarrollará la creación de los tipos de materiales tanto para un concreto de f'c = 210 kg/cm², como también del acero estructural fy = 4200 kg/cm².", styleN))
+    elements.append(Spacer(1, 5))
+    
+    # Tabla de propiedades de materiales
     if resultados:
         props_tabla = [
             ["Propiedad", "Valor", "Unidad"],
@@ -907,16 +987,43 @@ Generado por: CONSORCIO DEJ
         ]
         tabla_props = Table(props_tabla, colWidths=[200, 100, 80])
         tabla_props.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
         elements.append(tabla_props)
     elements.append(Spacer(1, 10))
+    
+    elements.append(Paragraph("8.2 Creación de los Elementos Estructurales", styleH2))
+    elements.append(Paragraph("Seguidamente se realiza la creación de los elementos estructurales tales como viga, columnas y losas.", styleN))
+    elements.append(Spacer(1, 5))
+    
+    elements.append(Paragraph("8.3 Modelamiento de la Edificación", styleH2))
+    elements.append(Paragraph("A continuación, realizamos el modelado de los elementos estructurales como se muestran a continuación:", styleN))
+    elements.append(Spacer(1, 5))
+    
+    elements.append(Paragraph("8.4 Asignación de Cargas en Losa y Vigas", styleH2))
+    elements.append(Paragraph("Se realiza la asignación de cargas en los elementos tipo Shell y tipo frame, de acuerdo a los datos asignados.", styleN))
+    elements.append(Spacer(1, 10))
     elements.append(PageBreak())
 
-    # 8. Predimensionamiento
-    elements.append(Paragraph("8. PREDIMENSIONAMIENTO", styleH))
+    # 9. Asignación de Parámetros
+    elements.append(Paragraph("9. ASIGNACIÓN DE PARÁMETROS", styleH))
+    elements.append(Paragraph("9.1 Patrones de cargas asignados", styleH2))
+    elements.append(Paragraph("Se realiza la definición de los patrones de carga tales como CM, CV, ESTXX y ESTYY.", styleN))
+    elements.append(Spacer(1, 5))
+    
+    elements.append(Paragraph("9.2 Definición del Sismo Estático X e Y", styleH2))
+    elements.append(Paragraph("Se definen los casos de sismo estático en ambas direcciones principales de la estructura.", styleN))
+    elements.append(Spacer(1, 5))
+    
+    elements.append(Paragraph("9.3 Definición del Espectro de Respuesta", styleH2))
+    elements.append(Paragraph("Se define el espectro de respuesta según RNE E.030 para el análisis dinámico modal espectral.", styleN))
+    elements.append(Spacer(1, 10))
+    elements.append(PageBreak())
+
+    # Predimensionamiento
+    elements.append(Paragraph("PREDIMENSIONAMIENTO", styleH))
     if resultados:
         dim_tabla = [
             ["Dimensión", "Valor", "Unidad"],
@@ -927,7 +1034,7 @@ Generado por: CONSORCIO DEJ
         ]
         tabla_dim = Table(dim_tabla, colWidths=[200, 100, 80])
         tabla_dim.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
@@ -1077,8 +1184,8 @@ Generado por: CONSORCIO DEJ
     if resultados and 'analisis_sismico' in resultados:
         sismico = resultados['analisis_sismico']
         peso_total = resultados.get('peso_total', 0)
-        elementos.append(Paragraph(f"Peso total de la estructura: {peso_total:.1f} ton", styleN))
-        elementos.append(Paragraph(f"Cortante basal distribuida en {datos_entrada.get('num_pisos', 1)} pisos", styleN))
+        elements.append(Paragraph(f"Peso total de la estructura: {peso_total:.1f} ton", styleN))
+        elements.append(Paragraph(f"Cortante basal distribuida en {datos_entrada.get('num_pisos', 1)} pisos", styleN))
     elements.append(Spacer(1, 5))
     
     # 10.5 Fuerzas en los pisos por Sismo Dinámico
@@ -1090,10 +1197,10 @@ Generado por: CONSORCIO DEJ
     elements.append(Paragraph("10.6 Masas Participativas", styleH2))
     if resultados and 'analisis_sismico' in resultados:
         sismico = resultados['analisis_sismico']
-        elementos.append(Paragraph("Los modos de vibración principales son:", styleN))
-        elementos.append(Paragraph("• Modo 1: Traslacional en dirección X", styleN))
-        elementos.append(Paragraph("• Modo 2: Traslacional en dirección Y", styleN))
-        elementos.append(Paragraph("• Modo 3: Torsional", styleN))
+        elements.append(Paragraph("Los modos de vibración principales son:", styleN))
+        elements.append(Paragraph("• Modo 1: Traslacional en dirección X", styleN))
+        elements.append(Paragraph("• Modo 2: Traslacional en dirección Y", styleN))
+        elements.append(Paragraph("• Modo 3: Torsional", styleN))
     elements.append(Spacer(1, 10))
     
     # 10.7 Fuerza Cortante que absorben los pórticos eje X
@@ -1101,8 +1208,8 @@ Generado por: CONSORCIO DEJ
     if resultados and 'analisis_sismico' in resultados:
         sismico = resultados['analisis_sismico']
         cortante_x = sismico.get('cortante_basal_ton', 0) * 0.5  # Distribución simplificada
-        elementos.append(Paragraph(f"Fuerza cortante total en eje X: {cortante_x:.2f} ton", styleN))
-        elementos.append(Paragraph("Distribución entre pórticos según rigidez relativa", styleN))
+        elements.append(Paragraph(f"Fuerza cortante total en eje X: {cortante_x:.2f} ton", styleN))
+        elements.append(Paragraph("Distribución entre pórticos según rigidez relativa", styleN))
     elements.append(Spacer(1, 5))
     
     # 10.8 Fuerza Cortante que absorben los pórticos eje Y
@@ -1110,8 +1217,8 @@ Generado por: CONSORCIO DEJ
     if resultados and 'analisis_sismico' in resultados:
         sismico = resultados['analisis_sismico']
         cortante_y = sismico.get('cortante_basal_ton', 0) * 0.5  # Distribución simplificada
-        elementos.append(Paragraph(f"Fuerza cortante total en eje Y: {cortante_y:.2f} ton", styleN))
-        elementos.append(Paragraph("Distribución entre pórticos según rigidez relativa", styleN))
+        elements.append(Paragraph(f"Fuerza cortante total en eje Y: {cortante_y:.2f} ton", styleN))
+        elements.append(Paragraph("Distribución entre pórticos según rigidez relativa", styleN))
     elements.append(Spacer(1, 5))
     
     # 10.9 Derivas de Entre piso eje X
@@ -1148,7 +1255,7 @@ Generado por: CONSORCIO DEJ
         ]
         tabla = Table(flexion_tabla, colWidths=[200, 100, 80])
         tabla.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgreen),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 1.0, 0.9)),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
@@ -1174,7 +1281,7 @@ Generado por: CONSORCIO DEJ
         ]
         tabla = Table(cortante_tabla, colWidths=[200, 100, 80])
         tabla.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightcoral),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(1.0, 0.8, 0.8)),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
@@ -1225,7 +1332,7 @@ Generado por: CONSORCIO DEJ
         ]
         tabla = Table(columna_tabla, colWidths=[200, 100, 80])
         tabla.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightyellow),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(1.0, 1.0, 0.9)),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
@@ -1283,7 +1390,7 @@ Generado por: CONSORCIO DEJ
         ]
         tabla = Table(zapata_tabla, colWidths=[200, 100, 80])
         tabla.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightcyan),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 1.0, 1.0)),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
@@ -1293,13 +1400,13 @@ Generado por: CONSORCIO DEJ
     # 14. CONCLUSIONES
     elements.append(PageBreak())
     elements.append(Paragraph("14. CONCLUSIONES", styleH))
-    elements.append(Paragraph("El análisis estructural completo realizado demuestra que la estructura cumple con los requisitos de seguridad establecidos en las normativas RNE E.060 y E.030, así como en ACI 318-2025.", styleN))
+    elements.append(Paragraph("• Con los resultados del análisis realizado, podemos afirmar que la Estructura con sus elementos estructurales dados, cumplen con las derivas de entre piso solicitadas, ya que se encuentran debajo del valor límite de la norma E – 030, por lo que dichos elementos cumplirán ante solicitaciones sísmicas.", styleN))
     elements.append(Spacer(1, 5))
-    elements.append(Paragraph("Los elementos estructurales diseñados (vigas, columnas y zapatas) presentan factores de seguridad adecuados y cumplen con los límites de deformación y resistencia especificados.", styleN))
+    elements.append(Paragraph("• También se puede observar que las columnas en el sentido X absorben un 91.53% y los muros un 8.47% por lo que se puede confirmar el tipo de sistema de pórticos.", styleN))
     elements.append(Spacer(1, 5))
-    elements.append(Paragraph("El análisis sísmico confirma que la estructura es capaz de resistir las fuerzas laterales esperadas en la zona sísmica considerada.", styleN))
+    elements.append(Paragraph("• También se puede observar que las columnas en el sentido Y absorben un 23.15% y los muros un 76.85% por lo que se puede confirmar el tipo de sistema de muros estructurales.", styleN))
     elements.append(Spacer(1, 5))
-    elements.append(Paragraph("Se recomienda realizar inspecciones periódicas y mantenimiento preventivo para garantizar la durabilidad de la estructura.", styleN))
+    elements.append(Paragraph("• Se realizo el diseño para los diferentes elementos estructurales como vigas, columnas y zapatas, garantizando así el buen funcionamiento de la estructura.", styleN))
     elements.append(Spacer(1, 10))
     
     # Pie de página y paginación
