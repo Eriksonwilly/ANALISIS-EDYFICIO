@@ -42,7 +42,7 @@ try:
     except:
         pass  # Si falla, continuar con el backend por defecto
     import matplotlib.pyplot as plt
-    from matplotlib.patches import Rectangle, Polygon
+    from matplotlib.patches import Rectangle, Polygon, Patch
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
@@ -1716,7 +1716,6 @@ def graficar_estribado_viga(L, d, s_critica, s_no_critica, b=25):
         largo = L
         
         # Dibujar viga
-        from matplotlib.patches import Rectangle
         rect_viga = Rectangle((0, 0), largo, alto, linewidth=2, edgecolor='black', facecolor='lightgray', alpha=0.7)
         ax.add_patch(rect_viga)
         
@@ -1754,7 +1753,6 @@ def graficar_estribado_viga(L, d, s_critica, s_no_critica, b=25):
         ax.grid(True, alpha=0.3)
         
         # Agregar leyenda
-        from matplotlib.patches import Patch
         legend_elements = [
             Patch(facecolor='red', alpha=0.2, label='Zona Crítica'),
             Patch(facecolor='blue', alpha=0.1, label='Zona No Crítica'),
@@ -2026,7 +2024,6 @@ def dibujar_vista_frontal_viga(b, h, d, tipo_fierro, cantidad_fierro, Av_estribo
         ax.grid(True, alpha=0.3)
         
         # Agregar leyenda
-        from matplotlib.patches import Patch
         legend_elements = [
             Patch(facecolor='orange', alpha=0.8, label='Acero Principal'),
             Patch(facecolor='green', alpha=0.8, label='Acero de Temperatura'),
