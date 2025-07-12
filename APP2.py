@@ -6,6 +6,7 @@ import pandas as pd
 from datetime import datetime
 import hashlib
 import io
+from io import BytesIO
 import tempfile
 import os
 
@@ -1100,8 +1101,8 @@ Generado por: CONSORCIO DEJ
             fig, ax = plt.subplots(figsize=(6, 4))
             propiedades = ['Ec', 'Es', 'fr', 'β1']
             valores = [resultados.get('Ec', 0)/1000, resultados.get('Es', 0)/1000000, resultados.get('fr', 0), resultados.get('beta1', 0)]
-            colors = ['#4169E1', '#DC143C', '#32CD32', '#FFD700']
-            bars = ax.bar(propiedades, valores, color=colors)
+            color_list = ['#4169E1', '#DC143C', '#32CD32', '#FFD700']
+            bars = ax.bar(propiedades, valores, color=color_list)
             ax.set_title("Propiedades de los Materiales")
             ax.set_ylabel("Valor")
             for bar in bars:
@@ -2853,9 +2854,9 @@ else:
                         fig, ax = plt.subplots(figsize=(10, 6))
                         propiedades = ['Peso Total', 'Ec', 'Es', 'Espesor Losa']
                         valores = [peso_total, props_concreto['Ec']/1000, props_acero['Es']/1000000, predim['h_losa']*100]
-                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
+                        color_list = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
                         
-                        bars = ax.bar(propiedades, valores, color=colors)
+                        bars = ax.bar(propiedades, valores, color=color_list)
                         ax.set_title("Resultados del Análisis Completo - Plan Premium")
                         ax.set_ylabel("Valor")
                         
@@ -3529,9 +3530,9 @@ Plan: Gratuito
                         propiedades = ['Capacidad', 'Área', 'Lado', 'Peralte']
                         valores = [resultados_zapata['qn'], resultados_zapata['A_estimada']/10000, 
                                  resultados_zapata['lado_zapata']/100, resultados_zapata['d_estimado']/100]
-                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
+                        color_list = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
                         
-                        bars = ax1.bar(propiedades, valores, color=colors)
+                        bars = ax1.bar(propiedades, valores, color=color_list)
                         ax1.set_title("Propiedades Principales de la Zapata")
                         ax1.set_ylabel("Valor")
                         
@@ -3775,9 +3776,9 @@ Plan: Gratuito
                         propiedades = ['As', 'a', 'φMn', 'Vc']
                         valores = [resultados_viga['As'], resultados_viga['a'], 
                                  resultados_viga['phiMn']/1000, resultados_viga['Vc']/1000]
-                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
+                        color_list = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
                         
-                        bars1 = ax1.bar(propiedades, valores, color=colors)
+                        bars1 = ax1.bar(propiedades, valores, color=color_list)
                         ax1.set_title("Propiedades del Diseño de Viga")
                         ax1.set_ylabel("Valor")
                         
@@ -4047,9 +4048,9 @@ Plan: Gratuito
                         propiedades = ['Pn', 'φPn', 'φ', 's_max']
                         valores = [resultados_columna['Pn']/1000, resultados_columna['phiPn']/1000, 
                                  resultados_columna['phi'], resultados_columna['s_max_estribos']]
-                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
+                        color_list = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
                         
-                        bars1 = ax1.bar(propiedades, valores, color=colors)
+                        bars1 = ax1.bar(propiedades, valores, color=color_list)
                         ax1.set_title("Propiedades del Diseño de Columna")
                         ax1.set_ylabel("Valor")
                         
@@ -4337,9 +4338,9 @@ Plan: Gratuito
                         propiedades = ['φVc', 'Vs', 's', 'Av,min']
                         valores = [resultados_corte['phiVc']/1000, resultados_corte['Vs_requerido']/1000, 
                                  resultados_corte['s_estribos'], resultados_corte['Av_min']]
-                        colors = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
+                        color_list = ['#2E8B57', '#4169E1', '#DC143C', '#FFD700']
                         
-                        bars1 = ax1.bar(propiedades, valores, color=colors)
+                        bars1 = ax1.bar(propiedades, valores, color=color_list)
                         ax1.set_title("Propiedades del Ejercicio de Corte")
                         ax1.set_ylabel("Valor")
                         
@@ -4421,9 +4422,9 @@ Plan: Gratuito
                         propiedades = ['Vu (ton)', 'φVc (ton)', 'Vs (ton)', 's_estribos (cm)']
                         valores = [Vu_corte/1000, resultados_corte['phiVc']/1000, 
                                  resultados_corte['Vs_requerido']/1000, resultados_corte['s_estribos']]
-                        colors = ['#2E8B57', '#DC143C', '#4169E1', '#FFD700']
+                        color_list = ['#2E8B57', '#DC143C', '#4169E1', '#FFD700']
                         
-                        bars1 = ax1.bar(propiedades, valores, color=colors)
+                        bars1 = ax1.bar(propiedades, valores, color=color_list)
                         ax1.set_title("Propiedades del Ejercicio de Corte")
                         ax1.set_ylabel("Valor")
                         
@@ -4535,8 +4536,8 @@ Plan: Gratuito
                                 propiedades = ['Ec', 'Es', 'fr', 'β1']
                                 valores = [resultados.get('Ec', 0)/1000, resultados.get('Es', 0)/1000000, 
                                           resultados.get('fr', 0), resultados.get('beta1', 0)]
-                                colors = ['#4169E1', '#DC143C', '#32CD32', '#FFD700']
-                                bars = ax1.bar(propiedades, valores, color=colors)
+                                color_list = ['#4169E1', '#DC143C', '#32CD32', '#FFD700']
+                                bars = ax1.bar(propiedades, valores, color=color_list)
                                 ax1.set_title("Propiedades de los Materiales - Plan Premium")
                                 ax1.set_ylabel("Valor")
                                 for bar in bars:
@@ -4575,9 +4576,9 @@ Plan: Gratuito
                                 dimensiones = ['Peso Total', 'Espesor Losa', 'Ancho Viga', 'Alto Viga']
                                 valores = [resultados.get('peso_total', 0), resultados.get('h_losa', 0)*100, 
                                           resultados.get('b_viga', 0), resultados.get('d_viga', 0)]
-                                colors = ['#2E8B57', '#FF6B6B', '#4ECDC4', '#FFD93D']
+                                color_list = ['#2E8B57', '#FF6B6B', '#4ECDC4', '#FFD93D']
                                 
-                                ax2.pie(valores, labels=dimensiones, autopct='%1.1f%%', colors=colors)
+                                ax2.pie(valores, labels=dimensiones, autopct='%1.1f%%', colors=color_list)
                                 ax2.set_title("Distribución de Dimensiones - Plan Premium")
                                 st.pyplot(fig2)
                             else:
