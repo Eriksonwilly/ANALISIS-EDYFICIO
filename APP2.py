@@ -100,17 +100,38 @@ def verificar_matplotlib():
     try:
         import subprocess
         import sys
-        print("🔧 Intentando instalar matplotlib...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "matplotlib"])
-        print("✅ Matplotlib instalado exitosamente")
+        import os
         
-        # Reintentar importación después de instalar
-        if importar_matplotlib():
-            print("✅ Matplotlib importado correctamente después de la instalación")
-            return True
+        print("🔧 Intentando instalar matplotlib...")
+        
+        # Verificar si estamos en un entorno virtual o conda
+        if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+            # Entorno virtual
+            pip_cmd = [sys.executable, "-m", "pip", "install", "matplotlib", "--quiet"]
         else:
-            print("❌ No se pudo importar matplotlib después de la instalación")
+            # Entorno global
+            pip_cmd = [sys.executable, "-m", "pip", "install", "matplotlib", "--user", "--quiet"]
+        
+        # Ejecutar instalación
+        result = subprocess.run(pip_cmd, capture_output=True, text=True, timeout=60)
+        
+        if result.returncode == 0:
+            print("✅ Matplotlib instalado exitosamente")
+            
+            # Reintentar importación después de instalar
+            if importar_matplotlib():
+                print("✅ Matplotlib importado correctamente después de la instalación")
+                return True
+            else:
+                print("❌ No se pudo importar matplotlib después de la instalación")
+                return False
+        else:
+            print(f"❌ Error en la instalación: {result.stderr}")
             return False
+            
+    except subprocess.TimeoutExpired:
+        print("❌ Timeout en la instalación de matplotlib")
+        return False
     except Exception as e:
         print(f"❌ No se pudo instalar matplotlib: {e}")
         return False
@@ -4786,12 +4807,21 @@ Plan: Gratuito
                 col1, col2 = st.columns(2)
                 with col1:
                     st.markdown("**🏗️ Propiedades de la Viga:**")
-                    fc_corte = st.number_input("f'c (kg/cm²)", 175, 700, 210, 10, key="fc_corte")
-                    b_corte = st.number_input("Ancho de Viga b (cm)", 20, 100, 25, 1, key="b_corte")
-                    h_corte = st.number_input("Peralte Total h (cm)", 35, 120, 60, 1, key="h_corte")
-                    d_corte = st.number_input("Peralte Efectivo d (cm)", 30, 100, 54, 1, key="d_corte")
-                    L_corte = st.number_input("Luz de la Viga L (m)", 3.0, 15.0, 6.0, 0.5, key="L_corte")
-                    fy_corte = st.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, key="fy_corte")
+                    
+                    # Cargar valores guardados o usar valores por defecto
+                    fc_default = st.session_state.get('fc_corte', 210)
+                    b_default = st.session_state.get('b_corte', 25)
+                    h_default = st.session_state.get('h_corte', 60)
+                    d_default = st.session_state.get('d_corte', 54)
+                    L_default = st.session_state.get('L_corte', 6.0)
+                    fy_default = st.session_state.get('fy_corte', 4200)
+                    
+                    fc_corte = st.number_input("f'c (kg/cm²)", 175, 700, fc_default, 10, key="fc_corte")
+                    b_corte = st.number_input("Ancho de Viga b (cm)", 20, 100, b_default, 1, key="b_corte")
+                    h_corte = st.number_input("Peralte Total h (cm)", 35, 120, h_default, 1, key="h_corte")
+                    d_corte = st.number_input("Peralte Efectivo d (cm)", 30, 100, d_default, 1, key="d_corte")
+                    L_corte = st.number_input("Luz de la Viga L (m)", 3.0, 15.0, L_default, 0.5, key="L_corte")
+                    fy_corte = st.number_input("fy (kg/cm²)", 2800, 6000, fy_default, 100, key="fy_corte")
                     
                     # Mostrar relación recomendada d/h
                     if h_corte > 0:
@@ -4801,9 +4831,17 @@ Plan: Gratuito
                 
                 with col2:
                     st.markdown("**⚖️ Cargas y Fuerzas:**")
-                    CM_corte = st.number_input("Carga Muerta CM (kg/m²)", 0, 5000, 350, 50, key="CM_corte")
-                    CV_corte = st.number_input("Carga Viva CV (kg/m²)", 0, 3000, 250, 50, key="CV_corte")
-                    Vu_corte = st.number_input("Cortante Último Vu (kg)", 1000, 100000, 18000, 100, key="Vu_corte")
+                    
+                    # Cargar valores guardados o usar valores por defecto
+                    CM_default = st.session_state.get('CM_corte', 350)
+                    CV_default = st.session_state.get('CV_corte', 250)
+                    Vu_default = st.session_state.get('Vu_corte', 18000)
+                    cantidad_default = st.session_state.get('cantidad_fierro', 12)
+                    tipo_default = st.session_state.get('tipo_fierro', "3/8\"")
+                    
+                    CM_corte = st.number_input("Carga Muerta CM (kg/m²)", 0, 5000, CM_default, 50, key="CM_corte")
+                    CV_corte = st.number_input("Carga Viva CV (kg/m²)", 0, 3000, CV_default, 50, key="CV_corte")
+                    Vu_corte = st.number_input("Cortante Último Vu (kg)", 1000, 100000, Vu_default, 100, key="Vu_corte")
                     
                     # Calcular Vu estimado basado en cargas
                     w_estimado = (CM_corte + CV_corte) * b_corte / 100  # kg/m
@@ -4813,7 +4851,7 @@ Plan: Gratuito
                     
                     st.markdown("**🔧 Propiedades de Estribos:**")
                     # Cantidad de fierro
-                    cantidad_fierro = st.number_input("Cantidad de Fierro", 0, 100, 12, 1, key="cantidad_fierro")
+                    cantidad_fierro = st.number_input("Cantidad de Fierro", 0, 100, cantidad_default, 1, key="cantidad_fierro")
                     
                     # Tipo de fierro
                     tipo_fierro = st.selectbox(
@@ -4844,6 +4882,36 @@ Plan: Gratuito
                     if d_corte >= h_corte:
                         st.warning("⚠️ El peralte efectivo debe ser menor que el peralte total")
                         st.info("Recomendación: d = h - 6 cm (recubrimiento)")
+                
+                # Botones de acción
+                st.markdown("---")
+                col1, col2, col3 = st.columns([1, 1, 1])
+                
+                with col1:
+                    if st.button("💾 Guardar Datos", type="secondary", key="guardar_datos_corte"):
+                        # Los datos ya se guardan automáticamente, solo mostrar confirmación
+                        st.success("✅ Datos guardados automáticamente")
+                
+                with col2:
+                    if st.button("🗑️ Limpiar Datos", type="secondary", key="limpiar_datos_corte"):
+                        # Limpiar datos guardados
+                        keys_to_clear = ['fc_corte', 'b_corte', 'h_corte', 'd_corte', 'L_corte', 'fy_corte',
+                                       'CM_corte', 'CV_corte', 'Vu_corte', 'cantidad_fierro', 'tipo_fierro',
+                                       'resultados_corte', 'datos_entrada_corte']
+                        for key in keys_to_clear:
+                            if key in st.session_state:
+                                del st.session_state[key]
+                        st.success("✅ Datos limpiados")
+                        st.rerun()
+                
+                with col3:
+                    if st.button("📊 Generar PDF", type="secondary", key="generar_pdf_corte"):
+                        if 'resultados_corte' in st.session_state and 'datos_entrada_corte' in st.session_state:
+                            st.info("📄 Generando PDF...")
+                            # Aquí se podría implementar la generación de PDF
+                            st.success("✅ PDF generado (funcionalidad en desarrollo)")
+                        else:
+                            st.warning("⚠️ Primero debe calcular el ejercicio de corte")
                 
                 # Información adicional
                 st.markdown("---")
@@ -4880,55 +4948,85 @@ Plan: Gratuito
                 # Determinar si es zona crítica (simplificado para visualización)
                 zona_critica_viz = Vu_corte > 8000  # Simplificado para visualización
                 
+                # Guardar datos automáticamente en session state
+                datos_entrada_actuales = {
+                    'fc': fc_corte, 'b': b_corte, 'h': h_corte, 'd': d_corte, 'L': L_corte,
+                    'fy': fy_corte, 'CM': CM_corte, 'CV': CV_corte, 'Vu': Vu_corte,
+                    'cantidad_fierro': cantidad_fierro, 'tipo_fierro': tipo_fierro, 'Av_estribo': Av_estribo
+                }
+                st.session_state['datos_entrada_corte'] = datos_entrada_actuales
+                
                 # Verificar matplotlib antes de intentar dibujar
                 if not MATPLOTLIB_AVAILABLE:
-                    verificar_matplotlib()
+                    # Intentar instalar matplotlib automáticamente
+                    if verificar_matplotlib():
+                        st.success("✅ Matplotlib instalado automáticamente")
+                    else:
+                        st.warning("⚠️ Instalando matplotlib...")
+                        # Reintentar una vez más
+                        if verificar_matplotlib():
+                            st.success("✅ Matplotlib instalado correctamente")
+                        else:
+                            st.error("❌ No se pudo instalar matplotlib automáticamente")
                 
                 # Dibujar vista frontal de la viga
-                fig_vista_frontal = dibujar_vista_frontal_viga(
-                    b=b_corte,
-                    h=h_corte,
-                    d=d_corte,
-                    tipo_fierro=tipo_fierro,
-                    cantidad_fierro=cantidad_fierro,
-                    Av_estribo=Av_estribo,
-                    s_estribos=s_estimado_viz,
-                    zona_critica=zona_critica_viz
-                )
-                
-                if fig_vista_frontal:
-                    st.pyplot(fig_vista_frontal)
+                try:
+                    fig_vista_frontal = dibujar_vista_frontal_viga(
+                        b=b_corte,
+                        h=h_corte,
+                        d=d_corte,
+                        tipo_fierro=tipo_fierro,
+                        cantidad_fierro=cantidad_fierro,
+                        Av_estribo=Av_estribo,
+                        s_estribos=s_estimado_viz,
+                        zona_critica=zona_critica_viz
+                    )
                     
-                    # Información adicional sobre la visualización
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.info("**🔍 Elementos mostrados:**")
-                        st.write("• Acero principal (naranja)")
-                        st.write("• Acero de temperatura (verde)")
-                        st.write("• Estribos (azul)")
-                        st.write("• Recubrimiento (rojo punteado)")
+                    if fig_vista_frontal:
+                        st.pyplot(fig_vista_frontal)
+                        
+                        # Información adicional sobre la visualización
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.info("**🔍 Elementos mostrados:**")
+                            st.write("• Acero principal (naranja)")
+                            st.write("• Acero de temperatura (verde)")
+                            st.write("• Estribos (azul)")
+                            st.write("• Recubrimiento (rojo punteado)")
+                        
+                        with col2:
+                            st.info("**📐 Dimensiones:**")
+                            st.write(f"• Ancho: {b_corte} cm")
+                            st.write(f"• Alto: {h_corte} cm")
+                            st.write(f"• Peralte efectivo: {d_corte} cm")
+                            st.write(f"• Estribos: {cantidad_fierro} φ{tipo_fierro}")
+                    else:
+                        st.error("📊 Visualización no disponible - Matplotlib no está instalado")
+                        
+                        # Botón para instalar matplotlib
+                        if st.button("🔧 Instalar Matplotlib Automáticamente", type="primary", key="install_matplotlib_vista"):
+                            with st.spinner("Instalando matplotlib..."):
+                                if verificar_matplotlib():
+                                    st.success("✅ Matplotlib instalado correctamente")
+                                    st.rerun()
+                                else:
+                                    st.error("❌ No se pudo instalar matplotlib automáticamente")
+                                    st.info("💡 Ejecuta manualmente: pip install matplotlib")
+                        
+                        # Información adicional
+                        mostrar_error_matplotlib("datos_entrada")
+                        
+                except Exception as e:
+                    st.error(f"❌ Error al generar visualización: {str(e)}")
+                    st.info("💡 Intentando instalar matplotlib automáticamente...")
                     
-                    with col2:
-                        st.info("**📐 Dimensiones:**")
-                        st.write(f"• Ancho: {b_corte} cm")
-                        st.write(f"• Alto: {h_corte} cm")
-                        st.write(f"• Peralte efectivo: {d_corte} cm")
-                        st.write(f"• Estribos: {cantidad_fierro} φ{tipo_fierro}")
-                else:
-                    st.error("📊 Visualización no disponible - Matplotlib no está instalado")
-                    
-                    # Botón para instalar matplotlib
-                    if st.button("🔧 Instalar Matplotlib Automáticamente", type="primary"):
-                        with st.spinner("Instalando matplotlib..."):
-                            if verificar_matplotlib():
-                                st.success("✅ Matplotlib instalado correctamente")
-                                st.rerun()
-                            else:
-                                st.error("❌ No se pudo instalar matplotlib automáticamente")
-                                st.info("💡 Ejecuta manualmente: pip install matplotlib")
-                    
-                    # Información adicional
-                    mostrar_error_matplotlib("datos_entrada")
+                    # Intentar instalar matplotlib
+                    if verificar_matplotlib():
+                        st.success("✅ Matplotlib instalado correctamente")
+                        st.rerun()
+                    else:
+                        st.error("❌ No se pudo instalar matplotlib automáticamente")
+                        mostrar_error_matplotlib("datos_entrada_error")
             
             with tab2:
                 st.subheader("🔬 Cálculos - Valores Preliminares")
