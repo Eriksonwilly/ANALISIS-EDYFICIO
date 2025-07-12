@@ -1713,6 +1713,7 @@ def graficar_estribado_viga(L, d, s_critica, s_no_critica, b=25):
         largo = L
         
         # Dibujar viga
+        from matplotlib.patches import Rectangle
         rect_viga = Rectangle((0, 0), largo, alto, linewidth=2, edgecolor='black', facecolor='lightgray', alpha=0.7)
         ax.add_patch(rect_viga)
         
@@ -3726,8 +3727,9 @@ Plan: Gratuito
                         ax2.pie(valores_corte, labels=tipos_corte, autopct='%1.1f%%', colors=colors_corte)
                         ax2.set_title("Distribución de Resistencia al Corte")
                         
-                        plt.tight_layout()
-                        st.pyplot(fig)
+                        if plt is not None:
+                            plt.tight_layout()
+                            st.pyplot(fig)
                         
                     except Exception as e:
                         st.info(f"📊 Gráfico no disponible: {str(e)}")
@@ -3945,7 +3947,7 @@ Plan: Gratuito
                     st.plotly_chart(fig3, use_container_width=True)
                 
                 # Gráfico alternativo con matplotlib
-                elif MATPLOTLIB_AVAILABLE and plt is not None:
+                if MATPLOTLIB_AVAILABLE and plt is not None:
                     try:
                         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
                         
@@ -3995,8 +3997,9 @@ Plan: Gratuito
                                autopct='%1.1f%%', colors=['#FF6B6B', '#4ECDC4'])
                         ax4.set_title("Distribución de Estribos")
                         
-                        plt.tight_layout()
-                        st.pyplot(fig)
+                        if plt is not None:
+                            plt.tight_layout()
+                            st.pyplot(fig)
                         
                     except Exception as e:
                         st.info(f"📊 Gráfico no disponible: {str(e)}")
@@ -4217,7 +4220,7 @@ Plan: Gratuito
                     st.plotly_chart(fig4, use_container_width=True)
                 
                 # Gráfico alternativo con matplotlib
-                elif MATPLOTLIB_AVAILABLE and plt is not None:
+                if MATPLOTLIB_AVAILABLE and plt is not None:
                     try:
                         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
                         
@@ -4592,7 +4595,7 @@ Plan: Gratuito
                     st.info("🔬 Realiza primero los cálculos en la pestaña 'Cálculos' para ver los gráficos")
                 
                 # Gráfico alternativo con matplotlib
-                elif MATPLOTLIB_AVAILABLE and plt is not None:
+                if MATPLOTLIB_AVAILABLE and plt is not None:
                     try:
                         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
                         
@@ -4726,8 +4729,9 @@ Plan: Gratuito
                         ax4.text(0, FS_corte + 0.05, f'{FS_corte:.2f}', ha='center', va='bottom')
                         ax4.legend()
                         
-                        plt.tight_layout()
-                        st.pyplot(fig)
+                        if plt is not None:
+                            plt.tight_layout()
+                            st.pyplot(fig)
                         
                     except Exception as e:
                         st.info(f"📊 Gráfico no disponible: {str(e)}")
@@ -4790,11 +4794,9 @@ Plan: Gratuito
                             st.plotly_chart(fig1, use_container_width=True)
                         else:
                             # Gráfico alternativo con matplotlib
-                            try:
-                                import matplotlib.pyplot as plt
-                                import matplotlib
-                                matplotlib.use('Agg')  # Backend no interactivo para Streamlit
-                                fig1, ax1 = plt.subplots(figsize=(8, 6))
+                            if MATPLOTLIB_AVAILABLE and plt is not None:
+                                try:
+                                    fig1, ax1 = plt.subplots(figsize=(8, 6))
                                 propiedades = ['Ec', 'Es', 'fr', 'β1']
                                 valores = [resultados.get('Ec', 0)/1000, resultados.get('Es', 0)/1000000, 
                                           resultados.get('fr', 0), resultados.get('beta1', 0)]
@@ -4833,7 +4835,7 @@ Plan: Gratuito
                             st.plotly_chart(fig2, use_container_width=True)
                         else:
                             # Gráfico alternativo con matplotlib
-                            if MATPLOTLIB_AVAILABLE:
+                            if MATPLOTLIB_AVAILABLE and plt is not None:
                                 fig2, ax2 = plt.subplots(figsize=(8, 8))
                                 dimensiones = ['Peso Total', 'Espesor Losa', 'Ancho Viga', 'Alto Viga']
                                 valores = [resultados.get('peso_total', 0), resultados.get('h_losa', 0)*100, 
