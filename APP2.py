@@ -1536,10 +1536,11 @@ def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, nu
     Calcula el ejercicio básico de corte según las fórmulas del PDF con datos completos
     """
     # Valores preliminares
-    phi = 0.75  # Factor de reducción para corte
+    phi = 0.75  # Factor de reducción para corte según ACI 318-19 Sección 21.2.1
     
-    # Corte resistente del concreto (φVc)
-    phiVc = 0.53 * sqrt(fc) * b * d
+    # Corte resistente del concreto (Vc y φVc) según ACI 318-19 Sección 22.5.5.1
+    Vc = 0.53 * sqrt(fc) * b * d  # Resistencia nominal del concreto
+    phiVc = phi * Vc  # Resistencia de diseño (con factor φ)
     
     # Cálculo de cargas si se proporcionan
     if CM > 0 or CV > 0:
@@ -1602,6 +1603,7 @@ def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, nu
         'Vu_proporcionado': Vu,
         'Vu_calculado': Vu_calculado if w_total > 0 else 0,
         'Vu_final': Vu_final,
+        'Vc': Vc,  # Agregado: resistencia nominal del concreto
         'phiVc': phiVc,
         'phiVc_mitad': phiVc_mitad,
         'Vs_requerido': Vs_requerido
@@ -1622,6 +1624,7 @@ def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, nu
     }
     
     return {
+        'Vc': Vc,  # Agregado: resistencia nominal del concreto
         'phiVc': phiVc,
         'Vs_requerido': Vs_requerido,
         's_estribos': s_final,
@@ -4357,7 +4360,8 @@ Plan: Gratuito
                 with col1:
                     st.markdown("""
                     **Corte Resistente del Concreto:**
-                    \[ \phi V_c = 0.53\sqrt{f'_c} \cdot b \cdot d \]
+                    \[ V_c = 0.53\sqrt{f'_c} \cdot b \cdot d \]
+                    \[ \phi V_c = \phi \cdot V_c \]
                     
                     **Para Vu > φVc:**
                     \[ s = \frac{A_v \cdot f_y \cdot d}{V_u - \phi V_c} \]
@@ -4370,6 +4374,8 @@ Plan: Gratuito
                     
                     **Refuerzo Mínimo:**
                     \[ A_{v,min} = 0.2\sqrt{f'_c} \cdot \frac{b \cdot s}{f_y} \]
+                    
+                    **Factor φ = 0.75** (ACI 318-19)
                     """, unsafe_allow_html=True)
             
             with tab2:
@@ -4401,35 +4407,43 @@ Plan: Gratuito
                     col1, col2, col3 = st.columns(3)
                     
                     with col1:
+                        st.metric("Resistencia Nominal (Vc)", f"{resultados['Vc']:.0f} kg")
                         st.metric("Corte Resistente (φVc)", f"{resultados['phiVc']:.0f} kg")
                         st.metric("φVc/2", f"{resultados['phiVc_mitad']:.0f} kg")
-                        st.metric("Carga Total (w)", f"{resultados['w_total']:.1f} kg/m")
                     
                     with col2:
                         st.metric("Vu Final", f"{resultados['Vu_final']:.0f} kg")
                         st.metric("Vs Requerido", f"{resultados['Vs_requerido']:.0f} kg")
-                        st.metric("Espaciamiento Máximo", f"{resultados['s_max_final']:.1f} cm")
+                        st.metric("Carga Total (w)", f"{resultados['w_total']:.1f} kg/m")
                     
                     with col3:
                         st.metric("Zona Crítica", "Sí" if resultados['zona_critica'] else "No")
                         st.metric("Necesita Estribos", "Sí" if resultados['necesita_estribos'] else "No")
-                        st.metric("Verificación", "CUMPLE" if resultados['verificacion'] else "NO CUMPLE")
+                        st.metric("Espaciamiento Máximo", f"{resultados['s_max_final']:.1f} cm")
                     
                     # Tabla de valores Vu
                     st.markdown("**📋 Tabla de Valores Vu:**")
                     valores_Vu = resultados['valores_Vu']
                     datos_tabla = pd.DataFrame({
-                        'Parámetro': ['Vu Proporcionado', 'Vu Calculado', 'Vu Final', 'φVc', 'φVc/2', 'Vs Requerido'],
+                        'Parámetro': ['Vu Proporcionado', 'Vu Calculado', 'Vu Final', 'Vc', 'φVc', 'φVc/2', 'Vs Requerido'],
                         'Valor (kg)': [
                             valores_Vu['Vu_proporcionado'],
                             valores_Vu['Vu_calculado'],
                             valores_Vu['Vu_final'],
+                            valores_Vu['Vc'],
                             valores_Vu['phiVc'],
                             valores_Vu['phiVc_mitad'],
                             valores_Vu['Vs_requerido']
                         ]
                     })
                     st.dataframe(datos_tabla, use_container_width=True)
+                    
+                    # Verificación final
+                    st.markdown("**✅ Verificación Final:**")
+                    if resultados['verificacion']:
+                        st.success("✅ CUMPLE - El diseño es seguro")
+                    else:
+                        st.error("❌ NO CUMPLE - Revisar el diseño")
             
             with tab3:
                 st.subheader("📊 Resultados - Cálculo de Estribos")
