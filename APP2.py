@@ -24,6 +24,8 @@ except Exception as e:
     # Fallback si hay problemas con la configuración
     pass
 
+
+
 # =====================
 # IMPORTACIONES DE GRÁFICOS (DIRECTAS COMO EN APP1.PY)
 # =====================
@@ -33,6 +35,7 @@ MATPLOTLIB_AVAILABLE = False
 plt = None
 Rectangle = None
 Polygon = None
+Patch = None
 
 try:
     import matplotlib
@@ -44,9 +47,14 @@ try:
     import matplotlib.pyplot as plt
     from matplotlib.patches import Rectangle, Polygon, Patch
     MATPLOTLIB_AVAILABLE = True
-except ImportError:
+    print("✅ Matplotlib importado correctamente")
+except ImportError as e:
     MATPLOTLIB_AVAILABLE = False
     plt = None
+    Rectangle = None
+    Polygon = None
+    Patch = None
+    print(f"❌ Error importando matplotlib: {e}")
 
 # Verificación de plotly
 try:
@@ -56,6 +64,58 @@ try:
 except ImportError:
     PLOTLY_AVAILABLE = False
     # No mostrar warning aquí para evitar problemas en la carga inicial
+
+# Función para verificar e instalar matplotlib si es necesario
+def verificar_matplotlib():
+    """Verifica si matplotlib está disponible y lo instala si es necesario"""
+    global MATPLOTLIB_AVAILABLE, plt, Rectangle, Polygon, Patch
+    
+    if not MATPLOTLIB_AVAILABLE:
+        try:
+            import subprocess
+            import sys
+            print("🔧 Intentando instalar matplotlib...")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "matplotlib"])
+            print("✅ Matplotlib instalado exitosamente")
+            
+            # Reintentar importación
+            import matplotlib
+            matplotlib.use('Agg')
+            import matplotlib.pyplot as plt
+            from matplotlib.patches import Rectangle, Polygon, Patch
+            MATPLOTLIB_AVAILABLE = True
+            print("✅ Matplotlib importado correctamente después de la instalación")
+            return True
+        except Exception as e:
+            print(f"❌ No se pudo instalar matplotlib: {e}")
+            return False
+    return True
+
+def mostrar_error_matplotlib(key_suffix=""):
+    """Muestra el mensaje de error de matplotlib con opciones de instalación"""
+    st.error("📊 Visualización no disponible - Matplotlib no está instalado")
+    
+    # Botón para instalar matplotlib
+    if st.button("🔧 Instalar Matplotlib Automáticamente", key=f"install_matplotlib_{key_suffix}"):
+        with st.spinner("Instalando matplotlib..."):
+            if verificar_matplotlib():
+                st.success("✅ Matplotlib instalado correctamente")
+                st.rerun()
+            else:
+                st.error("❌ No se pudo instalar matplotlib automáticamente")
+                st.info("💡 Ejecuta manualmente: pip install matplotlib")
+    
+    # Información adicional
+    st.info("""
+    **🔧 Para solucionar este problema:**
+    
+    1. **Opción 1:** Ejecuta `pip install matplotlib` en tu terminal
+    2. **Opción 2:** Usa el botón de arriba para instalación automática
+    3. **Opción 3:** Ejecuta `python instalar_dependencias.py`
+    4. **Opción 4:** Ejecuta `INSTALAR_DEPENDENCIAS.bat` (Windows)
+    
+    **📋 Después de instalar, reinicia la aplicación.**
+    """)
 
 # Verificación de reportlab
 try:
@@ -1907,6 +1967,10 @@ def dibujar_vista_frontal_viga(b, h, d, tipo_fierro, cantidad_fierro, Av_estribo
     """
     Dibuja la vista frontal de la viga mostrando acero de temperatura y estribos
     """
+    # Verificar matplotlib antes de intentar dibujar
+    if not MATPLOTLIB_AVAILABLE:
+        verificar_matplotlib()
+    
     if not MATPLOTLIB_AVAILABLE or plt is None:
         return None
         
@@ -2752,6 +2816,20 @@ def show_payment_form(plan):
 
 def show_auth_page():
     st.title("🏗️ CONSORCIO DEJ - Análisis Estructural")
+    
+    # =====================
+    # VERIFICACIÓN INICIAL DE MATPLOTLIB
+    # =====================
+    if not MATPLOTLIB_AVAILABLE:
+        st.warning("⚠️ Matplotlib no está disponible. Algunas visualizaciones no funcionarán.")
+        if st.button("🔧 Instalar Matplotlib Ahora", key="install_matplotlib_inicial"):
+            with st.spinner("Instalando matplotlib..."):
+                if verificar_matplotlib():
+                    st.success("✅ Matplotlib instalado correctamente. Reiniciando aplicación...")
+                    st.rerun()
+                else:
+                    st.error("❌ No se pudo instalar matplotlib automáticamente")
+                    st.info("💡 Ejecuta manualmente: pip install matplotlib")
     
     # Pestañas para login/registro
     tab1, tab2, tab3 = st.tabs(["🔐 Iniciar Sesión", "📝 Registrarse", "💰 Planes y Precios"])
@@ -4805,7 +4883,20 @@ Plan: Gratuito
                         st.write(f"• Peralte efectivo: {d_corte} cm")
                         st.write(f"• Estribos: {cantidad_fierro} φ{tipo_fierro}")
                 else:
-                    st.info("📊 Visualización no disponible - Matplotlib no está instalado")
+                    st.error("📊 Visualización no disponible - Matplotlib no está instalado")
+                    
+                    # Botón para instalar matplotlib
+                    if st.button("🔧 Instalar Matplotlib Automáticamente", type="primary"):
+                        with st.spinner("Instalando matplotlib..."):
+                            if verificar_matplotlib():
+                                st.success("✅ Matplotlib instalado correctamente")
+                                st.rerun()
+                            else:
+                                st.error("❌ No se pudo instalar matplotlib automáticamente")
+                                st.info("💡 Ejecuta manualmente: pip install matplotlib")
+                    
+                    # Información adicional
+                    mostrar_error_matplotlib("datos_entrada")
             
             with tab2:
                 st.subheader("🔬 Cálculos - Valores Preliminares")
