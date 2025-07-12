@@ -24,8 +24,6 @@ except Exception as e:
     # Fallback si hay problemas con la configuración
     pass
 
-
-
 # =====================
 # IMPORTACIONES DE GRÁFICOS (DIRECTAS COMO EN APP1.PY)
 # =====================
@@ -39,11 +37,7 @@ Patch = None
 
 try:
     import matplotlib
-    # Configurar backend de manera más robusta
-    try:
-        matplotlib.use('Agg')  # Backend no interactivo para Streamlit
-    except:
-        pass  # Si falla, continuar con el backend por defecto
+    matplotlib.use('Agg')  # Backend no interactivo para Streamlit
     import matplotlib.pyplot as plt
     from matplotlib.patches import Rectangle, Polygon, Patch
     MATPLOTLIB_AVAILABLE = True
@@ -55,6 +49,30 @@ except ImportError as e:
     Polygon = None
     Patch = None
     print(f"❌ Error importando matplotlib: {e}")
+
+def importar_matplotlib():
+    """Función para importar matplotlib de manera robusta"""
+    global MATPLOTLIB_AVAILABLE, plt, Rectangle, Polygon, Patch
+    
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        from matplotlib.patches import Rectangle, Polygon, Patch
+        MATPLOTLIB_AVAILABLE = True
+        return True
+    except ImportError:
+        MATPLOTLIB_AVAILABLE = False
+        plt = None
+        Rectangle = None
+        Polygon = None
+        Patch = None
+        return False
+
+# Verificación adicional para asegurar que matplotlib esté disponible
+if not MATPLOTLIB_AVAILABLE:
+    print("🔄 Reintentando importación de matplotlib...")
+    importar_matplotlib()
 
 # Verificación de plotly
 try:
@@ -70,26 +88,32 @@ def verificar_matplotlib():
     """Verifica si matplotlib está disponible y lo instala si es necesario"""
     global MATPLOTLIB_AVAILABLE, plt, Rectangle, Polygon, Patch
     
-    if not MATPLOTLIB_AVAILABLE:
-        try:
-            import subprocess
-            import sys
-            print("🔧 Intentando instalar matplotlib...")
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "matplotlib"])
-            print("✅ Matplotlib instalado exitosamente")
-            
-            # Reintentar importación
-            import matplotlib
-            matplotlib.use('Agg')
-            import matplotlib.pyplot as plt
-            from matplotlib.patches import Rectangle, Polygon, Patch
-            MATPLOTLIB_AVAILABLE = True
+    # Si ya está disponible, no hacer nada
+    if MATPLOTLIB_AVAILABLE and plt is not None:
+        return True
+    
+    # Intentar reimportar
+    if importar_matplotlib():
+        return True
+    
+    # Si no funciona, intentar instalar
+    try:
+        import subprocess
+        import sys
+        print("🔧 Intentando instalar matplotlib...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "matplotlib"])
+        print("✅ Matplotlib instalado exitosamente")
+        
+        # Reintentar importación después de instalar
+        if importar_matplotlib():
             print("✅ Matplotlib importado correctamente después de la instalación")
             return True
-        except Exception as e:
-            print(f"❌ No se pudo instalar matplotlib: {e}")
+        else:
+            print("❌ No se pudo importar matplotlib después de la instalación")
             return False
-    return True
+    except Exception as e:
+        print(f"❌ No se pudo instalar matplotlib: {e}")
+        return False
 
 def mostrar_error_matplotlib(key_suffix=""):
     """Muestra el mensaje de error de matplotlib con opciones de instalación"""
@@ -1970,6 +1994,10 @@ def dibujar_vista_frontal_viga(b, h, d, tipo_fierro, cantidad_fierro, Av_estribo
     # Verificar matplotlib antes de intentar dibujar
     if not MATPLOTLIB_AVAILABLE:
         verificar_matplotlib()
+    
+    # Reintentar importación si es necesario
+    if not MATPLOTLIB_AVAILABLE:
+        importar_matplotlib()
     
     if not MATPLOTLIB_AVAILABLE or plt is None:
         return None
@@ -4851,6 +4879,10 @@ Plan: Gratuito
                 
                 # Determinar si es zona crítica (simplificado para visualización)
                 zona_critica_viz = Vu_corte > 8000  # Simplificado para visualización
+                
+                # Verificar matplotlib antes de intentar dibujar
+                if not MATPLOTLIB_AVAILABLE:
+                    verificar_matplotlib()
                 
                 # Dibujar vista frontal de la viga
                 fig_vista_frontal = dibujar_vista_frontal_viga(
