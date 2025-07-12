@@ -1162,8 +1162,8 @@ Generado por: CONSORCIO DEJ
         ]
         tabla = Table(cortante_tabla, colWidths=[200, 100, 80])
         tabla.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.7, 0.8, 1.0)),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(0, 0, 0)),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
         elements.append(tabla)
@@ -1256,7 +1256,7 @@ Generado por: CONSORCIO DEJ
         tabla = Table(flexion_tabla, colWidths=[200, 100, 80])
         tabla.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 1.0, 0.9)),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(0, 0, 0)),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
         elements.append(tabla)
@@ -1282,7 +1282,7 @@ Generado por: CONSORCIO DEJ
         tabla = Table(cortante_tabla, colWidths=[200, 100, 80])
         tabla.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.Color(1.0, 0.8, 0.8)),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(0, 0, 0)),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
         elements.append(tabla)
@@ -1333,7 +1333,7 @@ Generado por: CONSORCIO DEJ
         tabla = Table(columna_tabla, colWidths=[200, 100, 80])
         tabla.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.Color(1.0, 1.0, 0.9)),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(0, 0, 0)),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
         elements.append(tabla)
@@ -1391,7 +1391,7 @@ Generado por: CONSORCIO DEJ
         tabla = Table(zapata_tabla, colWidths=[200, 100, 80])
         tabla.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 1.0, 1.0)),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('GRID', (0, 0), (-1, -1), 1, colors.Color(0, 0, 0)),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ]))
         elements.append(tabla)
@@ -2196,8 +2196,7 @@ def show_payment_form(plan):
             try:
                 result = payment_system.upgrade_plan(
                     st.session_state['user'], 
-                    plan, 
-                    payment_method
+                    plan
                 )
                 
                 if result["success"]:
@@ -2574,7 +2573,7 @@ else:
             st.plotly_chart(fig, use_container_width=True)
         else:
             # Gráfico alternativo con matplotlib
-            if MATPLOTLIB_AVAILABLE:
+            if MATPLOTLIB_AVAILABLE and plt is not None:
                 fig, ax = plt.subplots(figsize=(10, 6))
                 bars = ax.bar(datos['Propiedad'], datos['Valor'], 
                              color=['#2E8B57', '#DC143C', '#4169E1', '#FFD700'])
@@ -2850,7 +2849,7 @@ else:
                 else:
                     # Gráfico alternativo con matplotlib
                     st.subheader("📈 Gráfico de Resultados")
-                    if MATPLOTLIB_AVAILABLE:
+                    if MATPLOTLIB_AVAILABLE and plt is not None:
                         fig, ax = plt.subplots(figsize=(10, 6))
                         propiedades = ['Peso Total', 'Ec', 'Es', 'Espesor Losa']
                         valores = [peso_total, props_concreto['Ec']/1000, props_acero['Es']/1000000, predim['h_losa']*100]
@@ -4414,7 +4413,7 @@ Plan: Gratuito
                     st.pyplot(fig_corte)
                 
                 # Gráficos adicionales si matplotlib está disponible
-                if MATPLOTLIB_AVAILABLE:
+                if MATPLOTLIB_AVAILABLE and plt is not None:
                     try:
                         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 10))
                         
