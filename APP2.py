@@ -4346,16 +4346,28 @@ Plan: Gratuito
                     d_corte = st.number_input("Peralte Efectivo d (cm)", 30, 100, 54, 1, key="d_corte")
                     L_corte = st.number_input("Luz de la Viga L (m)", 3.0, 15.0, 6.0, 0.5, key="L_corte")
                     fy_corte = st.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, key="fy_corte")
+                    
+                    # Mostrar relación recomendada d/h
+                    if h_corte > 0:
+                        d_recomendado = h_corte - 6  # 6 cm de recubrimiento
+                        if abs(d_corte - d_recomendado) > 2:
+                            st.info(f"💡 Peralte efectivo recomendado: {d_recomendado} cm")
                 
                 with col2:
                     st.markdown("**⚖️ Cargas y Fuerzas:**")
-                    CM_corte = st.number_input("Carga Muerta CM (kg/m²)", 0, 5000, 150, 50, key="CM_corte")
-                    CV_corte = st.number_input("Carga Viva CV (kg/m²)", 0, 3000, 200, 50, key="CV_corte")
-                    Vu_corte = st.number_input("Cortante Último Vu (kg)", 1000, 100000, 16600, 100, key="Vu_corte")
+                    CM_corte = st.number_input("Carga Muerta CM (kg/m²)", 0, 5000, 350, 50, key="CM_corte")
+                    CV_corte = st.number_input("Carga Viva CV (kg/m²)", 0, 3000, 250, 50, key="CV_corte")
+                    Vu_corte = st.number_input("Cortante Último Vu (kg)", 1000, 100000, 18000, 100, key="Vu_corte")
+                    
+                    # Calcular Vu estimado basado en cargas
+                    w_estimado = (CM_corte + CV_corte) * b_corte / 100  # kg/m
+                    Vu_estimado = w_estimado * L_corte / 2  # kg
+                    if w_estimado > 0:
+                        st.info(f"💡 Vu estimado por cargas: {Vu_estimado:.0f} kg")
                     
                     st.markdown("**🔧 Propiedades de Estribos:**")
                     # Cantidad de fierro
-                    cantidad_fierro = st.number_input("Cantidad de Fierro", 0, 100, 0, 1, key="cantidad_fierro")
+                    cantidad_fierro = st.number_input("Cantidad de Fierro", 0, 100, 12, 1, key="cantidad_fierro")
                     
                     # Tipo de fierro
                     tipo_fierro = st.selectbox(
@@ -4376,6 +4388,11 @@ Plan: Gratuito
                     
                     Av_estribo = areas_estribos[tipo_fierro]
                     st.info(f"Área del estribo {tipo_fierro}: {Av_estribo} cm²")
+                    
+                    # Calcular espaciamiento estimado
+                    if cantidad_fierro > 0 and L_corte > 0:
+                        s_estimado = L_corte * 100 / cantidad_fierro  # cm
+                        st.info(f"💡 Espaciamiento estimado: {s_estimado:.1f} cm")
                     
                     # Validación del peralte
                     if d_corte >= h_corte:
@@ -4410,24 +4427,107 @@ Plan: Gratuito
             with tab2:
                 st.subheader("🔬 Cálculos - Valores Preliminares")
                 
+                # Verificación previa de datos
+                st.markdown("**🔍 Verificación Previa de Datos:**")
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    # Verificar relación d/h
+                    if h_corte > 0 and d_corte > 0:
+                        relacion_dh = d_corte / h_corte
+                        if 0.8 <= relacion_dh <= 0.95:
+                            st.success(f"✅ Relación d/h: {relacion_dh:.2f} (OK)")
+                        else:
+                            st.warning(f"⚠️ Relación d/h: {relacion_dh:.2f} (Revisar)")
+                    
+                    # Verificar relación b/h
+                    if h_corte > 0 and b_corte > 0:
+                        relacion_bh = b_corte / h_corte
+                        if 0.3 <= relacion_bh <= 0.8:
+                            st.success(f"✅ Relación b/h: {relacion_bh:.2f} (OK)")
+                        else:
+                            st.warning(f"⚠️ Relación b/h: {relacion_bh:.2f} (Revisar)")
+                
+                with col2:
+                    # Verificar cargas
+                    if CM_corte > 0 or CV_corte > 0:
+                        w_total_verif = (CM_corte + CV_corte) * b_corte / 100
+                        if 100 <= w_total_verif <= 2000:
+                            st.success(f"✅ Carga total: {w_total_verif:.0f} kg/m (OK)")
+                        else:
+                            st.warning(f"⚠️ Carga total: {w_total_verif:.0f} kg/m (Revisar)")
+                    
+                    # Verificar espaciamiento de estribos
+                    if cantidad_fierro > 0 and L_corte > 0:
+                        s_verif = L_corte * 100 / cantidad_fierro
+                        if 5 <= s_verif <= 60:
+                            st.success(f"✅ Espaciamiento: {s_verif:.1f} cm (OK)")
+                        else:
+                            st.warning(f"⚠️ Espaciamiento: {s_verif:.1f} cm (Revisar)")
+                
+                # Resumen de datos de entrada
+                st.markdown("**📋 Resumen de Datos de Entrada:**")
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.write(f"**Propiedades de la Viga:**")
+                    st.write(f"- f'c: {fc_corte} kg/cm²")
+                    st.write(f"- b: {b_corte} cm")
+                    st.write(f"- h: {h_corte} cm")
+                    st.write(f"- d: {d_corte} cm")
+                    st.write(f"- L: {L_corte} m")
+                    st.write(f"- fy: {fy_corte} kg/cm²")
+                
+                with col2:
+                    st.write(f"**Cargas y Estribos:**")
+                    st.write(f"- CM: {CM_corte} kg/m²")
+                    st.write(f"- CV: {CV_corte} kg/m²")
+                    st.write(f"- Vu: {Vu_corte} kg")
+                    st.write(f"- Cantidad fierro: {cantidad_fierro}")
+                    st.write(f"- Tipo fierro: {tipo_fierro}")
+                    st.write(f"- Av: {Av_estribo} cm²")
+                
                 # Botón para calcular
                 if st.button("🚀 Calcular Ejercicio de Corte", type="primary", key="calcular_corte"):
-                    # Cálculos del ejercicio de corte con nuevos parámetros
-                    resultados_corte = calcular_ejercicio_basico_corte(
-                        fc_corte, b_corte, d_corte, Vu_corte, fy_corte, 
-                        L_corte, CM_corte, CV_corte, cantidad_fierro, Av_estribo
-                    )
+                    # Validación final antes del cálculo
+                    errores = []
                     
-                    # Guardar resultados en session state
-                    st.session_state['resultados_corte'] = resultados_corte
-                    st.session_state['datos_entrada_corte'] = {
-                        'fc': fc_corte, 'b': b_corte, 'h': h_corte, 'd': d_corte, 'L': L_corte,
-                        'fy': fy_corte, 'CM': CM_corte, 'CV': CV_corte, 'Vu': Vu_corte,
-                        'cantidad_fierro': cantidad_fierro, 'tipo_fierro': tipo_fierro, 'Av_estribo': Av_estribo
-                    }
+                    if d_corte >= h_corte:
+                        errores.append("El peralte efectivo debe ser menor que el peralte total")
                     
-                    st.success("¡Ejercicio de corte calculado exitosamente!")
-                    st.balloons()
+                    if fc_corte < 175 or fc_corte > 700:
+                        errores.append("f'c debe estar entre 175 y 700 kg/cm²")
+                    
+                    if b_corte < 20 or b_corte > 100:
+                        errores.append("El ancho debe estar entre 20 y 100 cm")
+                    
+                    if d_corte < 30 or d_corte > 100:
+                        errores.append("El peralte efectivo debe estar entre 30 y 100 cm")
+                    
+                    if Vu_corte < 1000 or Vu_corte > 100000:
+                        errores.append("Vu debe estar entre 1000 y 100000 kg")
+                    
+                    if errores:
+                        st.error("❌ Errores en los datos de entrada:")
+                        for error in errores:
+                            st.write(f"- {error}")
+                    else:
+                        # Cálculos del ejercicio de corte con nuevos parámetros
+                        resultados_corte = calcular_ejercicio_basico_corte(
+                            fc_corte, b_corte, d_corte, Vu_corte, fy_corte, 
+                            L_corte, CM_corte, CV_corte, cantidad_fierro, Av_estribo
+                        )
+                        
+                        # Guardar resultados en session state
+                        st.session_state['resultados_corte'] = resultados_corte
+                        st.session_state['datos_entrada_corte'] = {
+                            'fc': fc_corte, 'b': b_corte, 'h': h_corte, 'd': d_corte, 'L': L_corte,
+                            'fy': fy_corte, 'CM': CM_corte, 'CV': CV_corte, 'Vu': Vu_corte,
+                            'cantidad_fierro': cantidad_fierro, 'tipo_fierro': tipo_fierro, 'Av_estribo': Av_estribo
+                        }
+                        
+                        st.success("¡Ejercicio de corte calculado exitosamente!")
+                        st.balloons()
                 
                 # Mostrar valores preliminares si existen resultados
                 if 'resultados_corte' in st.session_state:
