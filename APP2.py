@@ -1903,6 +1903,144 @@ def dibujar_corte_lateral_derecho(b, h, d, cantidad_fierro, tipo_fierro, Av_estr
     except Exception as e:
         print(f"Error dibujando corte lateral: {str(e)}")
         return None
+
+@safe_matplotlib_plot
+def dibujar_vista_frontal_viga(b, h, d, tipo_fierro, cantidad_fierro, Av_estribo, s_estribos, zona_critica):
+    """
+    Dibuja la vista frontal de la viga mostrando acero de temperatura y estribos
+    """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        return None
+        
+    try:
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Escala para visualización
+        escala = 1  # 1 unidad = 1 cm
+        
+        # Dimensiones
+        ancho = b
+        alto = h
+        
+        # Dibujar contorno de la viga
+        rect_viga = Rectangle((0, 0), ancho, alto, linewidth=3, edgecolor='black', facecolor='#f0f0f0', alpha=0.8)
+        ax.add_patch(rect_viga)
+        
+        # Dibujar recubrimiento (6 cm desde los bordes)
+        recubrimiento = 6
+        rect_recubrimiento = Rectangle((recubrimiento, recubrimiento), ancho-2*recubrimiento, alto-2*recubrimiento, 
+                                     linewidth=2, edgecolor='red', facecolor='none', linestyle='--', alpha=0.7)
+        ax.add_patch(rect_recubrimiento)
+        
+        # Dibujar acero longitudinal principal (barras inferiores)
+        num_barras_principales = 4  # Típicamente 4 barras principales
+        for i in range(num_barras_principales):
+            x = recubrimiento + 3 + i * ((ancho - 2*recubrimiento - 6) / (num_barras_principales - 1))
+            y = recubrimiento + 3
+            circulo = plt.Circle((x, y), 1.5, color='orange', alpha=0.8)
+            ax.add_patch(circulo)
+            ax.text(x, y, f"φ{tipo_fierro}", ha='center', va='center', fontsize=8, color='white', fontweight='bold')
+        
+        # Dibujar acero longitudinal superior (barras superiores)
+        num_barras_superiores = 2  # Típicamente 2 barras superiores
+        for i in range(num_barras_superiores):
+            x = recubrimiento + 3 + i * ((ancho - 2*recubrimiento - 6) / (num_barras_superiores - 1))
+            y = alto - recubrimiento - 3
+            circulo = plt.Circle((x, y), 1.5, color='orange', alpha=0.8)
+            ax.add_patch(circulo)
+            ax.text(x, y, f"φ{tipo_fierro}", ha='center', va='center', fontsize=8, color='white', fontweight='bold')
+        
+        # Dibujar acero de temperatura (barras laterales)
+        # Acero de temperatura en los lados (típicamente φ3/8" o φ1/2")
+        tipo_temp = "3/8\""  # Acero de temperatura típico
+        
+        # Acero de temperatura izquierdo
+        y_temp_izq = recubrimiento + 3
+        circulo_temp_izq = plt.Circle((recubrimiento + 1.5, y_temp_izq), 1.2, color='green', alpha=0.8)
+        ax.add_patch(circulo_temp_izq)
+        ax.text(recubrimiento + 1.5, y_temp_izq, f"φ{tipo_temp}", ha='center', va='center', fontsize=7, color='white', fontweight='bold')
+        
+        # Acero de temperatura derecho
+        y_temp_der = recubrimiento + 3
+        circulo_temp_der = plt.Circle((ancho - recubrimiento - 1.5, y_temp_der), 1.2, color='green', alpha=0.8)
+        ax.add_patch(circulo_temp_der)
+        ax.text(ancho - recubrimiento - 1.5, y_temp_der, f"φ{tipo_temp}", ha='center', va='center', fontsize=7, color='white', fontweight='bold')
+        
+        # Acero de temperatura superior izquierdo
+        y_temp_sup_izq = alto - recubrimiento - 3
+        circulo_temp_sup_izq = plt.Circle((recubrimiento + 1.5, y_temp_sup_izq), 1.2, color='green', alpha=0.8)
+        ax.add_patch(circulo_temp_sup_izq)
+        ax.text(recubrimiento + 1.5, y_temp_sup_izq, f"φ{tipo_temp}", ha='center', va='center', fontsize=7, color='white', fontweight='bold')
+        
+        # Acero de temperatura superior derecho
+        y_temp_sup_der = alto - recubrimiento - 3
+        circulo_temp_sup_der = plt.Circle((ancho - recubrimiento - 1.5, y_temp_sup_der), 1.2, color='green', alpha=0.8)
+        ax.add_patch(circulo_temp_sup_der)
+        ax.text(ancho - recubrimiento - 1.5, y_temp_sup_der, f"φ{tipo_temp}", ha='center', va='center', fontsize=7, color='white', fontweight='bold')
+        
+        # Dibujar estribos (vista frontal - solo se ven los extremos)
+        if cantidad_fierro > 0 and s_estribos > 0:
+            # Calcular número de estribos que caben en la altura
+            num_estribos_altura = int((alto - 2*recubrimiento) / s_estribos)
+            
+            # Dibujar estribos como líneas horizontales
+            for i in range(min(num_estribos_altura, 6)):  # Máximo 6 estribos para visualización
+                y = recubrimiento + i * s_estribos
+                if y + 2 <= alto - recubrimiento:  # Verificar que no se salga de la viga
+                    # Línea horizontal del estribo
+                    ax.plot([recubrimiento, ancho-recubrimiento], [y, y], 'b-', linewidth=3, alpha=0.7)
+                    ax.plot([recubrimiento, ancho-recubrimiento], [y+2, y+2], 'b-', linewidth=3, alpha=0.7)
+                    
+                    # Agregar número de estribo
+                    ax.text(ancho/2, y+1, f"{i+1}", ha='center', va='center', fontsize=6, color='white', fontweight='bold', 
+                           bbox=dict(boxstyle="round,pad=0.2", facecolor='blue', alpha=0.8))
+        
+        # Agregar cotas y anotaciones
+        ax.annotate(f'b = {b} cm', xy=(ancho/2, -2), ha='center', fontsize=12, color='blue')
+        ax.annotate(f'h = {h} cm', xy=(ancho+2, alto/2), va='center', fontsize=12, color='blue', rotation=90)
+        ax.annotate(f'd = {d} cm', xy=(ancho+2, d), va='center', fontsize=12, color='red', rotation=90)
+        
+        # Agregar información de acero
+        ax.text(ancho/2, alto+2, f'Acero Principal: φ{tipo_fierro} - Estribos: {cantidad_fierro} φ{tipo_fierro} @ {s_estribos:.1f}cm', 
+                ha='center', fontsize=10, color='blue', fontweight='bold')
+        
+        # Agregar información de acero de temperatura
+        ax.text(ancho/2, alto+4, f'Acero de Temperatura: φ{tipo_temp} (4 barras)', 
+                ha='center', fontsize=10, color='green', fontweight='bold')
+        
+        # Agregar información de zona crítica
+        if zona_critica:
+            ax.text(ancho/2, alto+6, 'ZONA CRÍTICA - Requiere refuerzo', 
+                    ha='center', fontsize=12, color='red', fontweight='bold')
+        else:
+            ax.text(ancho/2, alto+6, 'ZONA NO CRÍTICA - Estribos mínimos', 
+                    ha='center', fontsize=12, color='green', fontweight='bold')
+        
+        # Configurar gráfico
+        ax.set_xlim(-5, ancho+10)
+        ax.set_ylim(-5, alto+10)
+        ax.set_aspect('equal')
+        ax.set_title('Vista Frontal - Viga con Acero de Temperatura y Estribos', fontsize=14, fontweight='bold')
+        ax.set_xlabel('Ancho (cm)')
+        ax.set_ylabel('Altura (cm)')
+        ax.grid(True, alpha=0.3)
+        
+        # Agregar leyenda
+        from matplotlib.patches import Patch
+        legend_elements = [
+            Patch(facecolor='orange', alpha=0.8, label='Acero Principal'),
+            Patch(facecolor='green', alpha=0.8, label='Acero de Temperatura'),
+            Patch(facecolor='blue', alpha=0.7, label='Estribos'),
+            Patch(facecolor='red', alpha=0.3, label='Recubrimiento')
+        ]
+        ax.legend(handles=legend_elements, loc='upper left')
+        
+        plt.tight_layout()
+        return fig
+        
+    except Exception as e:
+        print(f"Error dibujando vista frontal: {str(e)}")
+        return None
     """
     Grafica el estribado de la viga según los resultados
     """
@@ -4628,6 +4766,49 @@ Plan: Gratuito
                     
                     **Factor φ = 0.75** (ACI 318-19)
                     """, unsafe_allow_html=True)
+                
+                # Visualización de la viga en vista frontal
+                st.markdown("---")
+                st.markdown("**🏗️ Visualización de la Viga - Vista Frontal:**")
+                
+                # Calcular espaciamiento estimado para la visualización
+                s_estimado_viz = L_corte * 100 / cantidad_fierro if cantidad_fierro > 0 else 25
+                
+                # Determinar si es zona crítica (simplificado para visualización)
+                zona_critica_viz = Vu_corte > 8000  # Simplificado para visualización
+                
+                # Dibujar vista frontal de la viga
+                fig_vista_frontal = dibujar_vista_frontal_viga(
+                    b=b_corte,
+                    h=h_corte,
+                    d=d_corte,
+                    tipo_fierro=tipo_fierro,
+                    cantidad_fierro=cantidad_fierro,
+                    Av_estribo=Av_estribo,
+                    s_estribos=s_estimado_viz,
+                    zona_critica=zona_critica_viz
+                )
+                
+                if fig_vista_frontal:
+                    st.pyplot(fig_vista_frontal)
+                    
+                    # Información adicional sobre la visualización
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.info("**🔍 Elementos mostrados:**")
+                        st.write("• Acero principal (naranja)")
+                        st.write("• Acero de temperatura (verde)")
+                        st.write("• Estribos (azul)")
+                        st.write("• Recubrimiento (rojo punteado)")
+                    
+                    with col2:
+                        st.info("**📐 Dimensiones:**")
+                        st.write(f"• Ancho: {b_corte} cm")
+                        st.write(f"• Alto: {h_corte} cm")
+                        st.write(f"• Peralte efectivo: {d_corte} cm")
+                        st.write(f"• Estribos: {cantidad_fierro} φ{tipo_fierro}")
+                else:
+                    st.info("📊 Visualización no disponible - Matplotlib no está instalado")
             
             with tab2:
                 st.subheader("🔬 Cálculos - Valores Preliminares")
@@ -4896,6 +5077,39 @@ Plan: Gratuito
                     )
                     if fig_estribado:
                         st.pyplot(fig_estribado)
+                    else:
+                        st.info("📊 Gráfico no disponible - Matplotlib no está instalado")
+                    
+                    # Gráfico 3: Vista frontal de la viga con acero de temperatura
+                    st.markdown("**🏗️ Vista Frontal - Viga con Acero de Temperatura:**")
+                    fig_vista_frontal = dibujar_vista_frontal_viga(
+                        b=datos_entrada['b'],
+                        h=datos_entrada['h'],
+                        d=datos_entrada['d'],
+                        tipo_fierro=datos_entrada['tipo_fierro'],
+                        cantidad_fierro=datos_entrada['cantidad_fierro'],
+                        Av_estribo=datos_entrada['Av_estribo'],
+                        s_estribos=resultados['s_estribos'],
+                        zona_critica=resultados['zona_critica']
+                    )
+                    if fig_vista_frontal:
+                        st.pyplot(fig_vista_frontal)
+                        
+                        # Información adicional sobre la visualización
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.info("**🔍 Elementos mostrados:**")
+                            st.write("• Acero principal (naranja)")
+                            st.write("• Acero de temperatura (verde)")
+                            st.write("• Estribos (azul)")
+                            st.write("• Recubrimiento (rojo punteado)")
+                        
+                        with col2:
+                            st.info("**📐 Información del diseño:**")
+                            st.write(f"• Zona: {'Crítica' if resultados['zona_critica'] else 'No Crítica'}")
+                            st.write(f"• Espaciamiento: {resultados['s_estribos']:.1f} cm")
+                            st.write(f"• Estribos: {datos_entrada['cantidad_fierro']} φ{datos_entrada['tipo_fierro']}")
+                            st.write(f"• Av: {datos_entrada['Av_estribo']} cm²")
                     else:
                         st.info("📊 Gráfico no disponible - Matplotlib no está instalado")
                     
