@@ -4048,9 +4048,9 @@ Plan: Gratuito
                         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 10))
                         
                         # Gráfico 1: Propiedades del ejercicio
-                        propiedades = ['Vu (ton)', 'φVc (ton)', 'φVs (ton)', 's_estribos (cm)']
+                        propiedades = ['Vu (ton)', 'φVc (ton)', 'Vs (ton)', 's_estribos (cm)']
                         valores = [Vu_corte/1000, resultados_corte['phiVc']/1000, 
-                                 resultados_corte['phiVs']/1000, resultados_corte['s_estribos']]
+                                 resultados_corte['Vs_requerido']/1000, resultados_corte['s_estribos']]
                         colors = ['#2E8B57', '#DC143C', '#4169E1', '#FFD700']
                         
                         bars1 = ax1.bar(propiedades, valores, color=colors)
