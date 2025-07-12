@@ -1531,7 +1531,7 @@ def calcular_diseno_columnas_detallado(fc, fy, Ag, Ast, Pu, Mu=0):
         'verificacion_cuantia': rho_min <= rho <= rho_max
     }
 
-def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, num_estribos=0):
+def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, cantidad_fierro=0, Av_estribo=0.71):
     """
     Calcula el ejercicio básico de corte según las fórmulas del PDF con datos completos
     """
@@ -1559,8 +1559,8 @@ def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, nu
         # Calcular Vs requerido
         Vs_requerido = Vu_final - phiVc
         
-        # Asumir estribos #3 (Av = 0.71 cm²)
-        Av = 0.71
+        # Usar área del estribo seleccionado
+        Av = Av_estribo
         
         # Espaciamiento de estribos
         s = Av * fy * d / Vs_requerido
@@ -1582,9 +1582,9 @@ def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, nu
     Av_min = 0.2 * sqrt(fc) * b * s_final / fy
     
     # Cálculo de estribos
-    if num_estribos > 0:
-        # Calcular espaciamiento basado en número de estribos
-        s_por_estribo = L * 100 / num_estribos  # cm
+    if cantidad_fierro > 0:
+        # Calcular espaciamiento basado en cantidad de fierro
+        s_por_estribo = L * 100 / cantidad_fierro  # cm
         s_estribado = min(s_por_estribo, s_final)
     else:
         s_estribado = s_final
@@ -4342,6 +4342,7 @@ Plan: Gratuito
                     st.markdown("**🏗️ Propiedades de la Viga:**")
                     fc_corte = st.number_input("f'c (kg/cm²)", 175, 700, 210, 10, key="fc_corte")
                     b_corte = st.number_input("Ancho de Viga b (cm)", 20, 100, 25, 1, key="b_corte")
+                    h_corte = st.number_input("Peralte Total h (cm)", 35, 120, 60, 1, key="h_corte")
                     d_corte = st.number_input("Peralte Efectivo d (cm)", 30, 100, 54, 1, key="d_corte")
                     L_corte = st.number_input("Luz de la Viga L (m)", 3.0, 15.0, 6.0, 0.5, key="L_corte")
                     fy_corte = st.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, key="fy_corte")
@@ -4351,7 +4352,35 @@ Plan: Gratuito
                     CM_corte = st.number_input("Carga Muerta CM (kg/m²)", 0, 5000, 150, 50, key="CM_corte")
                     CV_corte = st.number_input("Carga Viva CV (kg/m²)", 0, 3000, 200, 50, key="CV_corte")
                     Vu_corte = st.number_input("Cortante Último Vu (kg)", 1000, 100000, 16600, 100, key="Vu_corte")
-                    num_estribos = st.number_input("Cantidad de Fierro Corte (estribos)", 0, 100, 0, 1, key="num_estribos")
+                    
+                    st.markdown("**🔧 Propiedades de Estribos:**")
+                    # Cantidad de fierro
+                    cantidad_fierro = st.number_input("Cantidad de Fierro", 0, 100, 0, 1, key="cantidad_fierro")
+                    
+                    # Tipo de fierro
+                    tipo_fierro = st.selectbox(
+                        "Tipo de Fierro",
+                        ["3/8\"", "1/2\"", "5/8\"", "3/4\"", "1\""],
+                        index=0,
+                        key="tipo_fierro"
+                    )
+                    
+                    # Calcular área del estribo según el tipo seleccionado
+                    areas_estribos = {
+                        "3/8\"": 0.71,  # cm²
+                        "1/2\"": 1.27,  # cm²
+                        "5/8\"": 1.98,  # cm²
+                        "3/4\"": 2.85,  # cm²
+                        "1\"": 5.07     # cm²
+                    }
+                    
+                    Av_estribo = areas_estribos[tipo_fierro]
+                    st.info(f"Área del estribo {tipo_fierro}: {Av_estribo} cm²")
+                    
+                    # Validación del peralte
+                    if d_corte >= h_corte:
+                        st.warning("⚠️ El peralte efectivo debe ser menor que el peralte total")
+                        st.info("Recomendación: d = h - 6 cm (recubrimiento)")
                 
                 # Información adicional
                 st.markdown("---")
@@ -4383,17 +4412,18 @@ Plan: Gratuito
                 
                 # Botón para calcular
                 if st.button("🚀 Calcular Ejercicio de Corte", type="primary", key="calcular_corte"):
-                    # Cálculos del ejercicio de corte
+                    # Cálculos del ejercicio de corte con nuevos parámetros
                     resultados_corte = calcular_ejercicio_basico_corte(
                         fc_corte, b_corte, d_corte, Vu_corte, fy_corte, 
-                        L_corte, CM_corte, CV_corte, num_estribos
+                        L_corte, CM_corte, CV_corte, cantidad_fierro, Av_estribo
                     )
                     
                     # Guardar resultados en session state
                     st.session_state['resultados_corte'] = resultados_corte
                     st.session_state['datos_entrada_corte'] = {
-                        'fc': fc_corte, 'b': b_corte, 'd': d_corte, 'L': L_corte,
-                        'fy': fy_corte, 'CM': CM_corte, 'CV': CV_corte, 'Vu': Vu_corte
+                        'fc': fc_corte, 'b': b_corte, 'h': h_corte, 'd': d_corte, 'L': L_corte,
+                        'fy': fy_corte, 'CM': CM_corte, 'CV': CV_corte, 'Vu': Vu_corte,
+                        'cantidad_fierro': cantidad_fierro, 'tipo_fierro': tipo_fierro, 'Av_estribo': Av_estribo
                     }
                     
                     st.success("¡Ejercicio de corte calculado exitosamente!")
@@ -4410,6 +4440,12 @@ Plan: Gratuito
                         st.metric("Resistencia Nominal (Vc)", f"{resultados['Vc']:.0f} kg")
                         st.metric("Corte Resistente (φVc)", f"{resultados['phiVc']:.0f} kg")
                         st.metric("φVc/2", f"{resultados['phiVc_mitad']:.0f} kg")
+                        
+                        # Mostrar información del peralte
+                        if 'datos_entrada_corte' in st.session_state:
+                            datos = st.session_state['datos_entrada_corte']
+                            st.info(f"Peralte Total: {datos.get('h', 60)} cm")
+                            st.info(f"Peralte Efectivo: {datos.get('d', 54)} cm")
                     
                     with col2:
                         st.metric("Vu Final", f"{resultados['Vu_final']:.0f} kg")
@@ -4460,18 +4496,27 @@ Plan: Gratuito
                         st.metric("Espaciamiento Estribado", f"{resultados['s_estribado']:.1f} cm")
                         st.metric("Refuerzo Mínimo (Av,min)", f"{resultados['Av_min']:.3f} cm²/cm")
                         st.metric("Factor de Seguridad", f"{resultados['Vu_final'] / resultados['phiVc']:.2f}")
+                        
+                        # Mostrar información del estribo seleccionado
+                        if 'datos_entrada_corte' in st.session_state:
+                            datos = st.session_state['datos_entrada_corte']
+                            st.info(f"Estribo seleccionado: {datos.get('tipo_fierro', '3/8\"')} - {datos.get('Av_estribo', 0.71)} cm²")
                     
                     with col2:
                         if resultados['zona_critica']:
                             st.warning("⚠️ Zona Crítica - Requiere refuerzo")
                             st.info("📋 Distribución recomendada:")
                             st.write("- 1@5cm, 5@10cm, resto@25cm")
-                            st.write("- Usar estribos #3 (φ3/8\")")
+                            if 'datos_entrada_corte' in st.session_state:
+                                datos = st.session_state['datos_entrada_corte']
+                                st.write(f"- Usar estribos {datos.get('tipo_fierro', '3/8\"')}")
                         else:
                             st.success("✅ Zona No Crítica")
                             st.info("📋 Estribos mínimos:")
                             st.write("- Espaciamiento máximo: d/2 o 60cm")
-                            st.write("- Diámetro mínimo: φ3/8\"")
+                            if 'datos_entrada_corte' in st.session_state:
+                                datos = st.session_state['datos_entrada_corte']
+                                st.write(f"- Diámetro mínimo: {datos.get('tipo_fierro', '3/8\"')}")
                         
                         if resultados['verificacion']:
                             st.success("✅ Verificación: CUMPLE")
