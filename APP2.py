@@ -1531,17 +1531,32 @@ def calcular_diseno_columnas_detallado(fc, fy, Ag, Ast, Pu, Mu=0):
         'verificacion_cuantia': rho_min <= rho <= rho_max
     }
 
-def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200):
+def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, num_estribos=0):
     """
-    Calcula el ejercicio básico de corte según las fórmulas del PDF
+    Calcula el ejercicio básico de corte según las fórmulas del PDF con datos completos
     """
+    # Valores preliminares
+    phi = 0.75  # Factor de reducción para corte
+    
     # Corte resistente del concreto (φVc)
     phiVc = 0.53 * sqrt(fc) * b * d
     
+    # Cálculo de cargas si se proporcionan
+    if CM > 0 or CV > 0:
+        # Carga total por metro lineal
+        w_total = (CM + CV) * b / 100  # kg/m
+        # Cortante máximo en viga simplemente apoyada
+        Vu_calculado = w_total * L / 2
+        # Usar el mayor entre Vu proporcionado y Vu calculado
+        Vu_final = max(Vu, Vu_calculado)
+    else:
+        Vu_final = Vu
+        w_total = 0
+    
     # Verificar si se necesita refuerzo
-    if Vu > phiVc:
+    if Vu_final > phiVc:
         # Calcular Vs requerido
-        Vs_requerido = Vu - phiVc
+        Vs_requerido = Vu_final - phiVc
         
         # Asumir estribos #3 (Av = 0.71 cm²)
         Av = 0.71
@@ -1554,27 +1569,208 @@ def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200):
         s_final = min(s, s_max)
         
         zona_critica = True
+        necesita_estribos = True
     else:
         # No se necesita refuerzo, usar espaciamiento máximo
         s_final = min(d/2, 60)
         Vs_requerido = 0
         zona_critica = False
+        necesita_estribos = False
     
     # Refuerzo mínimo
     Av_min = 0.2 * sqrt(fc) * b * s_final / fy
+    
+    # Cálculo de estribos
+    if num_estribos > 0:
+        # Calcular espaciamiento basado en número de estribos
+        s_por_estribo = L * 100 / num_estribos  # cm
+        s_estribado = min(s_por_estribo, s_final)
+    else:
+        s_estribado = s_final
+    
+    # Verificaciones adicionales
+    phiVc_mitad = phiVc / 2
+    if Vu_final <= phiVc_mitad:
+        zona_no_critica = True
+        s_max_final = min(d/2, 60)
+    else:
+        zona_no_critica = False
+        s_max_final = s_final
+    
+    # Tabla de valores Vu
+    valores_Vu = {
+        'Vu_proporcionado': Vu,
+        'Vu_calculado': Vu_calculado if w_total > 0 else 0,
+        'Vu_final': Vu_final,
+        'phiVc': phiVc,
+        'phiVc_mitad': phiVc_mitad,
+        'Vs_requerido': Vs_requerido
+    }
+    
+    # Cálculo de estribado gráficamente
+    estribado_grafico = {
+        'zona_critica': {
+            'longitud': d,  # cm
+            'estribos': int(d / s_final) if s_final > 0 else 0,
+            'espaciamiento': s_final
+        },
+        'zona_no_critica': {
+            'longitud': L * 100 - d,  # cm
+            'estribos': int((L * 100 - d) / s_max_final) if s_max_final > 0 else 0,
+            'espaciamiento': s_max_final
+        }
+    }
     
     return {
         'phiVc': phiVc,
         'Vs_requerido': Vs_requerido,
         's_estribos': s_final,
+        's_estribado': s_estribado,
         'zona_critica': zona_critica,
+        'zona_no_critica': zona_no_critica,
+        'necesita_estribos': necesita_estribos,
         'Av_min': Av_min,
-        'verificacion': Vu <= phiVc + Vs_requerido
+        'verificacion': Vu_final <= phiVc + Vs_requerido,
+        'valores_Vu': valores_Vu,
+        'estribado_grafico': estribado_grafico,
+        'w_total': w_total,
+        'Vu_final': Vu_final,
+        'phiVc_mitad': phiVc_mitad,
+        's_max_final': s_max_final
     }
 
 # =====================
 # FUNCIONES PARA DIBUJAR ELEMENTOS ESTRUCTURALES
 # =====================
+
+@safe_matplotlib_plot
+def graficar_diagrama_cortantes(L, Vu, phiVc, phiVc_mitad, w_total=0):
+    """
+    Grafica el diagrama de cortantes para el ejercicio de corte
+    """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        return None
+        
+    try:
+        fig, ax = plt.subplots(figsize=(12, 8))
+        
+        # Generar puntos a lo largo de la viga
+        x = np.linspace(0, L, 100)
+        
+        # Calcular cortantes a lo largo de la viga
+        if w_total > 0:
+            # Carga distribuida
+            V = w_total * L / 2 - w_total * x
+        else:
+            # Carga puntual en el centro (simplificado)
+            V = np.full_like(x, Vu / 2)
+            V[x > L/2] = -Vu / 2
+        
+        # Graficar diagrama de cortantes
+        ax.plot(x, V, 'b-', linewidth=3, label='Cortante (V)')
+        ax.fill_between(x, V, 0, alpha=0.3, color='blue')
+        
+        # Líneas de referencia
+        ax.axhline(y=phiVc, color='red', linestyle='--', linewidth=2, label=f'φVc = {phiVc:.0f} kg')
+        ax.axhline(y=phiVc_mitad, color='orange', linestyle='--', linewidth=2, label=f'φVc/2 = {phiVc_mitad:.0f} kg')
+        ax.axhline(y=0, color='black', linestyle='-', alpha=0.5)
+        
+        # Configurar gráfico
+        ax.set_title('Diagrama de Cortantes - Ejercicio Básico de Corte', fontsize=14, fontweight='bold')
+        ax.set_xlabel('Distancia (m)')
+        ax.set_ylabel('Cortante (kg)')
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+        
+        # Agregar anotaciones
+        ax.text(L/2, max(V)*0.8, f'Vu máximo = {max(abs(V)):.0f} kg', 
+                ha='center', va='center', bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7))
+        
+        plt.tight_layout()
+        return fig
+        
+    except Exception as e:
+        print(f"Error graficando diagrama de cortantes: {str(e)}")
+        return None
+
+@safe_matplotlib_plot
+def graficar_estribado_viga(L, d, s_critica, s_no_critica, b=25):
+    """
+    Grafica el estribado de la viga según los resultados
+    """
+    if not MATPLOTLIB_AVAILABLE or plt is None:
+        return None
+        
+    try:
+        fig, ax = plt.subplots(figsize=(15, 8))
+        
+        # Escala para visualización
+        escala = 100  # 1 unidad = 1 cm
+        
+        # Dimensiones de la viga
+        ancho = b / escala
+        alto = d / escala
+        largo = L
+        
+        # Dibujar viga
+        rect_viga = Rectangle((0, 0), largo, alto, linewidth=2, edgecolor='black', facecolor='lightgray', alpha=0.7)
+        ax.add_patch(rect_viga)
+        
+        # Zona crítica (primeros d cm)
+        zona_critica = Rectangle((0, 0), d/100, alto, linewidth=1, edgecolor='red', facecolor='red', alpha=0.2)
+        ax.add_patch(zona_critica)
+        
+        # Zona no crítica
+        zona_no_critica = Rectangle((d/100, 0), largo - d/100, alto, linewidth=1, edgecolor='blue', facecolor='blue', alpha=0.1)
+        ax.add_patch(zona_no_critica)
+        
+        # Dibujar estribos en zona crítica
+        if s_critica > 0:
+            num_estribos_critica = int(d / s_critica)
+            for i in range(num_estribos_critica):
+                x = (d / num_estribos_critica) * i / 100
+                rect_estribo = Rectangle((x, 0), 0.05, alto, linewidth=1, edgecolor='red', facecolor='red', alpha=0.5)
+                ax.add_patch(rect_estribo)
+        
+        # Dibujar estribos en zona no crítica
+        if s_no_critica > 0:
+            num_estribos_no_critica = int((L*100 - d) / s_no_critica)
+            for i in range(num_estribos_no_critica):
+                x = d/100 + (s_no_critica / 100) * i
+                if x < largo:
+                    rect_estribo = Rectangle((x, 0), 0.05, alto, linewidth=1, edgecolor='blue', facecolor='blue', alpha=0.3)
+                    ax.add_patch(rect_estribo)
+        
+        # Configurar gráfico
+        ax.set_xlim(-0.1, largo + 0.1)
+        ax.set_ylim(-0.1, alto + 0.1)
+        ax.set_aspect('equal')
+        ax.set_title(f'Estribado de Viga - Zona Crítica: φ3/8"@{s_critica:.1f}cm, Zona No Crítica: φ3/8"@{s_no_critica:.1f}cm', 
+                    fontsize=12, fontweight='bold')
+        ax.set_xlabel('Longitud (m)')
+        ax.set_ylabel('Altura (m)')
+        ax.grid(True, alpha=0.3)
+        
+        # Agregar leyenda
+        from matplotlib.patches import Patch
+        legend_elements = [
+            Patch(facecolor='red', alpha=0.2, label='Zona Crítica'),
+            Patch(facecolor='blue', alpha=0.1, label='Zona No Crítica'),
+            Patch(facecolor='red', alpha=0.5, label='Estribos Críticos'),
+            Patch(facecolor='blue', alpha=0.3, label='Estribos No Críticos')
+        ]
+        ax.legend(handles=legend_elements, loc='upper right')
+        
+        # Agregar anotaciones
+        ax.text(largo/2, alto/2, f'Zona Crítica: {d}cm\nZona No Crítica: {L*100-d:.0f}cm', 
+                ha='center', va='center', bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7))
+        
+        plt.tight_layout()
+        return fig
+        
+    except Exception as e:
+        print(f"Error graficando estribado: {str(e)}")
+        return None
 
 def dibujar_viga(b, d, L, As, s_estribos, fc, fy):
     """
@@ -4128,187 +4324,272 @@ Plan: Gratuito
         else:
             st.success("⭐ Plan Premium: Ejercicio completo de corte con todas las verificaciones")
             
-            # Datos de entrada para ejercicio de corte
-            col1, col2 = st.columns(2)
+            # Pestañas para organizar la información
+            tab1, tab2, tab3, tab4 = st.tabs(["📐 Datos de Entrada", "🔬 Cálculos", "📊 Resultados", "📈 Gráficos"])
             
-            with col1:
-                st.subheader("📐 Datos de Entrada")
-                fc_corte = st.number_input("f'c (kg/cm²)", 175, 700, 210, 10, key="fc_corte")
-                b_corte = st.number_input("Ancho de Viga b (cm)", 20, 100, 25, 1, key="b_corte")
-                d_corte = st.number_input("Peralte Efectivo d (cm)", 30, 100, 54, 1, key="d_corte")
-                Vu_corte = st.number_input("Cortante Último Vu (kg)", 1000, 100000, 16600, 100, key="Vu_corte")
-                fy_corte = st.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, key="fy_corte")
-            
-            with col2:
-                st.subheader("📋 Fórmulas del PDF")
-                st.markdown("""
-                **Corte Resistente del Concreto:**
-                \[ \phi V_c = 0.53\sqrt{f'_c} \cdot b \cdot d \]
+            with tab1:
+                st.subheader("📐 Datos de Entrada - Ejercicio Básico de Corte")
                 
-                **Para Vu > φVc:**
-                \[ s = \frac{A_v \cdot f_y \cdot d}{V_u - \phi V_c} \]
-                
-                **Para φVc/2 < Vu ≤ φVc:**
-                \[ s_{max} = \min(\frac{d}{2}, 60cm) \]
-                
-                **Refuerzo Mínimo:**
-                \[ A_{v,min} = 0.2\sqrt{f'_c} \cdot \frac{b \cdot s}{f_y} \]
-                """, unsafe_allow_html=True)
-            
-            # Botón para calcular
-            if st.button("🔬 Calcular Ejercicio de Corte", type="primary"):
-                # Cálculos del ejercicio de corte
-                resultados_corte = calcular_ejercicio_basico_corte(fc_corte, b_corte, d_corte, Vu_corte, fy_corte)
-                
-                st.success("¡Ejercicio de corte calculado exitosamente!")
-                st.balloons()
-                
-                # Mostrar resultados
-                st.subheader("📊 Resultados del Ejercicio de Corte")
-                
+                # Datos básicos de la viga
                 col1, col2 = st.columns(2)
-                
                 with col1:
-                    st.metric("Corte Resistente (φVc)", f"{resultados_corte['phiVc']:.0f} kg")
-                    st.metric("Corte Acero Requerido (Vs)", f"{resultados_corte['Vs_requerido']:.0f} kg")
-                    st.metric("Espaciamiento Estribos", f"{resultados_corte['s_estribos']:.1f} cm")
-                    if resultados_corte['zona_critica']:
-                        st.warning("⚠️ Zona Crítica - Requiere refuerzo")
-                    else:
-                        st.success("✅ Zona No Crítica")
+                    st.markdown("**🏗️ Propiedades de la Viga:**")
+                    fc_corte = st.number_input("f'c (kg/cm²)", 175, 700, 210, 10, key="fc_corte")
+                    b_corte = st.number_input("Ancho de Viga b (cm)", 20, 100, 25, 1, key="b_corte")
+                    d_corte = st.number_input("Peralte Efectivo d (cm)", 30, 100, 54, 1, key="d_corte")
+                    L_corte = st.number_input("Luz de la Viga L (m)", 3.0, 15.0, 6.0, 0.5, key="L_corte")
+                    fy_corte = st.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, key="fy_corte")
                 
                 with col2:
-                    st.metric("Refuerzo Mínimo (Av,min)", f"{resultados_corte['Av_min']:.3f} cm²/cm")
-                    if resultados_corte['verificacion']:
-                        st.success("✅ Verificación: CUMPLE")
+                    st.markdown("**⚖️ Cargas y Fuerzas:**")
+                    CM_corte = st.number_input("Carga Muerta CM (kg/m²)", 0, 5000, 150, 50, key="CM_corte")
+                    CV_corte = st.number_input("Carga Viva CV (kg/m²)", 0, 3000, 200, 50, key="CV_corte")
+                    Vu_corte = st.number_input("Cortante Último Vu (kg)", 1000, 100000, 16600, 100, key="Vu_corte")
+                    num_estribos = st.number_input("Cantidad de Fierro Corte (estribos)", 0, 100, 0, 1, key="num_estribos")
+                
+                # Información adicional
+                st.markdown("---")
+                st.markdown("**📋 Fórmulas del PDF:**")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown("""
+                    **Corte Resistente del Concreto:**
+                    \[ \phi V_c = 0.53\sqrt{f'_c} \cdot b \cdot d \]
+                    
+                    **Para Vu > φVc:**
+                    \[ s = \frac{A_v \cdot f_y \cdot d}{V_u - \phi V_c} \]
+                    """, unsafe_allow_html=True)
+                
+                with col2:
+                    st.markdown("""
+                    **Para φVc/2 < Vu ≤ φVc:**
+                    \[ s_{max} = \min(\frac{d}{2}, 60cm) \]
+                    
+                    **Refuerzo Mínimo:**
+                    \[ A_{v,min} = 0.2\sqrt{f'_c} \cdot \frac{b \cdot s}{f_y} \]
+                    """, unsafe_allow_html=True)
+            
+            with tab2:
+                st.subheader("🔬 Cálculos - Valores Preliminares")
+                
+                # Botón para calcular
+                if st.button("🚀 Calcular Ejercicio de Corte", type="primary", key="calcular_corte"):
+                    # Cálculos del ejercicio de corte
+                    resultados_corte = calcular_ejercicio_basico_corte(
+                        fc_corte, b_corte, d_corte, Vu_corte, fy_corte, 
+                        L_corte, CM_corte, CV_corte, num_estribos
+                    )
+                    
+                    # Guardar resultados en session state
+                    st.session_state['resultados_corte'] = resultados_corte
+                    st.session_state['datos_entrada_corte'] = {
+                        'fc': fc_corte, 'b': b_corte, 'd': d_corte, 'L': L_corte,
+                        'fy': fy_corte, 'CM': CM_corte, 'CV': CV_corte, 'Vu': Vu_corte
+                    }
+                    
+                    st.success("¡Ejercicio de corte calculado exitosamente!")
+                    st.balloons()
+                
+                # Mostrar valores preliminares si existen resultados
+                if 'resultados_corte' in st.session_state:
+                    resultados = st.session_state['resultados_corte']
+                    
+                    st.markdown("**📊 Valores Preliminares:**")
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.metric("Corte Resistente (φVc)", f"{resultados['phiVc']:.0f} kg")
+                        st.metric("φVc/2", f"{resultados['phiVc_mitad']:.0f} kg")
+                        st.metric("Carga Total (w)", f"{resultados['w_total']:.1f} kg/m")
+                    
+                    with col2:
+                        st.metric("Vu Final", f"{resultados['Vu_final']:.0f} kg")
+                        st.metric("Vs Requerido", f"{resultados['Vs_requerido']:.0f} kg")
+                        st.metric("Espaciamiento Máximo", f"{resultados['s_max_final']:.1f} cm")
+                    
+                    with col3:
+                        st.metric("Zona Crítica", "Sí" if resultados['zona_critica'] else "No")
+                        st.metric("Necesita Estribos", "Sí" if resultados['necesita_estribos'] else "No")
+                        st.metric("Verificación", "CUMPLE" if resultados['verificacion'] else "NO CUMPLE")
+                    
+                    # Tabla de valores Vu
+                    st.markdown("**📋 Tabla de Valores Vu:**")
+                    valores_Vu = resultados['valores_Vu']
+                    datos_tabla = pd.DataFrame({
+                        'Parámetro': ['Vu Proporcionado', 'Vu Calculado', 'Vu Final', 'φVc', 'φVc/2', 'Vs Requerido'],
+                        'Valor (kg)': [
+                            valores_Vu['Vu_proporcionado'],
+                            valores_Vu['Vu_calculado'],
+                            valores_Vu['Vu_final'],
+                            valores_Vu['phiVc'],
+                            valores_Vu['phiVc_mitad'],
+                            valores_Vu['Vs_requerido']
+                        ]
+                    })
+                    st.dataframe(datos_tabla, use_container_width=True)
+            
+            with tab3:
+                st.subheader("📊 Resultados - Cálculo de Estribos")
+                
+                if 'resultados_corte' in st.session_state:
+                    resultados = st.session_state['resultados_corte']
+                    
+                    # Cálculo de estribos
+                    st.markdown("**🔧 Cálculo de Estribos:**")
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.metric("Espaciamiento Estribos", f"{resultados['s_estribos']:.1f} cm")
+                        st.metric("Espaciamiento Estribado", f"{resultados['s_estribado']:.1f} cm")
+                        st.metric("Refuerzo Mínimo (Av,min)", f"{resultados['Av_min']:.3f} cm²/cm")
+                        st.metric("Factor de Seguridad", f"{resultados['Vu_final'] / resultados['phiVc']:.2f}")
+                    
+                    with col2:
+                        if resultados['zona_critica']:
+                            st.warning("⚠️ Zona Crítica - Requiere refuerzo")
+                            st.info("📋 Distribución recomendada:")
+                            st.write("- 1@5cm, 5@10cm, resto@25cm")
+                            st.write("- Usar estribos #3 (φ3/8\")")
+                        else:
+                            st.success("✅ Zona No Crítica")
+                            st.info("📋 Estribos mínimos:")
+                            st.write("- Espaciamiento máximo: d/2 o 60cm")
+                            st.write("- Diámetro mínimo: φ3/8\"")
+                        
+                        if resultados['verificacion']:
+                            st.success("✅ Verificación: CUMPLE")
+                        else:
+                            st.error("❌ Verificación: NO CUMPLE")
+                    
+                    # Cálculo de estribado gráficamente
+                    st.markdown("**📐 Cálculo de Estribado Gráficamente:**")
+                    estribado = resultados['estribado_grafico']
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown("**🔴 Zona Crítica:**")
+                        st.write(f"- Longitud: {estribado['zona_critica']['longitud']} cm")
+                        st.write(f"- Estribos: {estribado['zona_critica']['estribos']} unidades")
+                        st.write(f"- Espaciamiento: {estribado['zona_critica']['espaciamiento']:.1f} cm")
+                    
+                    with col2:
+                        st.markdown("**🔵 Zona No Crítica:**")
+                        st.write(f"- Longitud: {estribado['zona_no_critica']['longitud']:.0f} cm")
+                        st.write(f"- Estribos: {estribado['zona_no_critica']['estribos']} unidades")
+                        st.write(f"- Espaciamiento: {estribado['zona_no_critica']['espaciamiento']:.1f} cm")
+                    
+                    # Comparación con valores del PDF
+                    st.markdown("**📚 Comparación con Valores del PDF:**")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.write(f"- φVc calculado: {resultados['phiVc']:.0f} kg")
+                        st.write(f"- φVc del PDF: 8.86 ton = 8,860 kg")
+                        
+                        diferencia = abs(resultados['phiVc'] - 8860) / 8860 * 100
+                        if diferencia < 5:
+                            st.success(f"✅ Coincidencia excelente (diferencia: {diferencia:.1f}%)")
+                        elif diferencia < 10:
+                            st.info(f"ℹ️ Coincidencia buena (diferencia: {diferencia:.1f}%)")
+                        else:
+                            st.warning(f"⚠️ Diferencia significativa (diferencia: {diferencia:.1f}%)")
+                    
+                    with col2:
+                        st.write(f"- Vu máximo: {resultados['Vu_final']:.0f} kg")
+                        st.write(f"- Factor de seguridad: {resultados['Vu_final'] / resultados['phiVc']:.2f}")
+                        if resultados['Vu_final'] / resultados['phiVc'] >= 1.0:
+                            st.success("✅ Diseño seguro")
+                        else:
+                            st.error("❌ Diseño inseguro")
+            
+            with tab4:
+                st.subheader("📈 Gráficos - Diagrama de Cortantes y Estribado")
+                
+                if 'resultados_corte' in st.session_state:
+                    resultados = st.session_state['resultados_corte']
+                    datos_entrada = st.session_state['datos_entrada_corte']
+                    
+                    # Gráfico 1: Diagrama de cortantes
+                    st.markdown("**📊 Diagrama de Cortantes:**")
+                    fig_cortantes = graficar_diagrama_cortantes(
+                        datos_entrada['L'], resultados['Vu_final'], 
+                        resultados['phiVc'], resultados['phiVc_mitad'], 
+                        resultados['w_total']
+                    )
+                    if fig_cortantes:
+                        st.pyplot(fig_cortantes)
                     else:
-                        st.error("❌ Verificación: NO CUMPLE")
-                    st.metric("Factor de Seguridad", f"{Vu_corte / resultados_corte['phiVc']:.2f}")
-                
-                # Análisis detallado
-                st.subheader("🔍 Análisis Detallado")
-                
-                # Comparación con valores del PDF
-                st.markdown("**Comparación con valores del PDF:**")
-                st.write(f"- φVc calculado: {resultados_corte['phiVc']:.0f} kg")
-                st.write(f"- φVc del PDF: 8.86 ton = 8,860 kg")
-                
-                diferencia = abs(resultados_corte['phiVc'] - 8860) / 8860 * 100
-                if diferencia < 5:
-                    st.success(f"✅ Coincidencia excelente (diferencia: {diferencia:.1f}%)")
-                elif diferencia < 10:
-                    st.info(f"ℹ️ Coincidencia buena (diferencia: {diferencia:.1f}%)")
+                        st.info("📊 Gráfico no disponible - Matplotlib no está instalado")
+                    
+                    # Gráfico 2: Estribado de la viga
+                    st.markdown("**🏗️ Estribado de la Viga (Lado Derecho como Típico):**")
+                    fig_estribado = graficar_estribado_viga(
+                        datos_entrada['L'], datos_entrada['d'],
+                        resultados['s_estribos'], resultados['s_max_final'],
+                        datos_entrada['b']
+                    )
+                    if fig_estribado:
+                        st.pyplot(fig_estribado)
+                    else:
+                        st.info("📊 Gráfico no disponible - Matplotlib no está instalado")
+                    
+                    # Gráficos adicionales con Plotly
+                    if PLOTLY_AVAILABLE:
+                        st.markdown("**📈 Gráficos Adicionales:**")
+                        
+                        # Gráfico 3: Propiedades de corte
+                        datos_corte = pd.DataFrame({
+                            'Propiedad': ['φVc (ton)', 'Vs Requerido (ton)', 'Espaciamiento (cm)', 'Av,min (cm²/cm)'],
+                            'Valor': [resultados['phiVc']/1000, resultados['Vs_requerido']/1000, 
+                                     resultados['s_estribos'], resultados['Av_min']]
+                        })
+                        
+                        fig1 = px.bar(datos_corte, x='Propiedad', y='Valor',
+                                    title="Propiedades del Ejercicio de Corte",
+                                    color='Propiedad',
+                                    color_discrete_map={
+                                        'φVc (ton)': '#2E8B57',
+                                        'Vs Requerido (ton)': '#4169E1',
+                                        'Espaciamiento (cm)': '#DC143C',
+                                        'Av,min (cm²/cm)': '#FFD700'
+                                    })
+                        
+                        fig1.update_layout(height=400)
+                        fig1.update_traces(texttemplate='%{y:.2f}', textposition='outside')
+                        st.plotly_chart(fig1, use_container_width=True)
+                        
+                        # Gráfico 4: Estado de la zona
+                        estado_zona = 'Crítica' if resultados['zona_critica'] else 'No Crítica'
+                        color_zona = '#DC143C' if resultados['zona_critica'] else '#2E8B57'
+                        
+                        fig2 = px.pie(values=[1], names=[estado_zona],
+                                    title="Estado de la Zona de Corte",
+                                    color_discrete_map={estado_zona: color_zona})
+                        
+                        fig2.update_traces(textposition='inside', textinfo='label+percent')
+                        st.plotly_chart(fig2, use_container_width=True)
+                        
+                        # Gráfico 5: Factor de seguridad
+                        FS_corte = resultados['Vu_final'] / resultados['phiVc']
+                        estado_fs = 'Seguro' if FS_corte >= 1.0 else 'Inseguro'
+                        datos_fs = pd.DataFrame({
+                            'Tipo': ['Factor de Seguridad'],
+                            'Valor': [FS_corte],
+                            'Estado': [estado_fs]
+                        })
+                        
+                        fig3 = px.bar(datos_fs, x='Tipo', y='Valor',
+                                    title="Factor de Seguridad",
+                                    color='Estado',
+                                    color_discrete_map={'Seguro': '#2E8B57', 'Inseguro': '#DC143C'})
+                        
+                        fig3.update_layout(height=300)
+                        fig3.update_traces(texttemplate='%{y:.2f}', textposition='outside')
+                        fig3.add_hline(y=1.0, line_dash="dash", line_color="red", annotation_text="Límite de Seguridad")
+                        st.plotly_chart(fig3, use_container_width=True)
+                    else:
+                        st.info("📊 Gráficos interactivos no disponibles - Plotly no está instalado")
                 else:
-                    st.warning(f"⚠️ Diferencia significativa (diferencia: {diferencia:.1f}%)")
-                
-                # Recomendaciones
-                st.subheader("💡 Recomendaciones")
-                if resultados_corte['zona_critica']:
-                    st.info("📋 Distribución de estribos recomendada:")
-                    st.write("- 1@5cm, 5@10cm, resto@25cm")
-                    st.write("- Usar estribos #3 (φ3/8\")")
-                    st.write("- Verificar longitud de desarrollo")
-                else:
-                    st.info("📋 Estribos mínimos:")
-                    st.write("- Espaciamiento máximo: d/2 o 60cm")
-                    st.write("- Diámetro mínimo: φ3/8\"")
-                
-                # Gráficos de resultados
-                st.subheader("📈 Gráficos de Resultados")
-                
-                # Gráfico 1: Propiedades de corte
-                if PLOTLY_AVAILABLE:
-                    datos_corte = pd.DataFrame({
-                        'Propiedad': ['φVc (kg)', 'Vs Requerido (kg)', 'Espaciamiento (cm)', 'Av,min (cm²/cm)'],
-                        'Valor': [resultados_corte['phiVc']/1000, resultados_corte['Vs_requerido']/1000, 
-                                 resultados_corte['s_estribos'], resultados_corte['Av_min']]
-                    })
-                    
-                    fig1 = px.bar(datos_corte, x='Propiedad', y='Valor',
-                                title="Propiedades del Ejercicio de Corte",
-                                color='Propiedad',
-                                color_discrete_map={
-                                    'φVc (kg)': '#2E8B57',
-                                    'Vs Requerido (kg)': '#4169E1',
-                                    'Espaciamiento (cm)': '#DC143C',
-                                    'Av,min (cm²/cm)': '#FFD700'
-                                })
-                    
-                    fig1.update_layout(
-                        xaxis_title="Propiedad",
-                        yaxis_title="Valor",
-                        height=400
-                    )
-                    
-                    fig1.update_traces(texttemplate='%{y:.2f}', textposition='outside')
-                    st.plotly_chart(fig1, use_container_width=True)
-                
-                # Gráfico 2: Comparación con valores del PDF
-                if PLOTLY_AVAILABLE:
-                    datos_comparacion_pdf = pd.DataFrame({
-                        'Fuente': ['Cálculo Actual', 'Valor del PDF'],
-                        'φVc (ton)': [resultados_corte['phiVc']/1000, 8.86]
-                    })
-                    
-                    fig2 = px.bar(datos_comparacion_pdf, x='Fuente', y='φVc (ton)',
-                                title="Comparación con Valores del PDF",
-                                color='Fuente',
-                                color_discrete_map={
-                                    'Cálculo Actual': '#2E8B57',
-                                    'Valor del PDF': '#4169E1'
-                                })
-                    
-                    fig2.update_layout(
-                        xaxis_title="Fuente",
-                        yaxis_title="φVc (ton)",
-                        height=400
-                    )
-                    
-                    fig2.update_traces(texttemplate='%{y:.2f}', textposition='outside')
-                    st.plotly_chart(fig2, use_container_width=True)
-                
-                # Gráfico 3: Estado de la zona
-                if PLOTLY_AVAILABLE:
-                    estado_zona = 'Crítica' if resultados_corte['zona_critica'] else 'No Crítica'
-                    color_zona = '#DC143C' if resultados_corte['zona_critica'] else '#2E8B57'
-                    
-                    fig3 = px.pie(values=[1], names=[estado_zona],
-                                title="Estado de la Zona de Corte",
-                                color_discrete_map={estado_zona: color_zona})
-                    
-                    fig3.update_traces(textposition='inside', textinfo='label+percent')
-                    st.plotly_chart(fig3, use_container_width=True)
-                
-                # Gráfico 4: Factor de seguridad
-                if PLOTLY_AVAILABLE:
-                    FS_corte = Vu_corte / resultados_corte['phiVc']
-                    datos_fs = pd.DataFrame({
-                        'Tipo': ['Factor de Seguridad'],
-                        'Valor': [FS_corte]
-                    })
-                    
-                    # Crear DataFrame con estado del factor de seguridad
-                    estado_fs = 'Seguro' if FS_corte >= 1.0 else 'Inseguro'
-                    datos_fs = pd.DataFrame({
-                        'Tipo': ['Factor de Seguridad'],
-                        'Valor': [FS_corte],
-                        'Estado': [estado_fs]
-                    })
-                    
-                    fig4 = px.bar(datos_fs, x='Tipo', y='Valor',
-                                title="Factor de Seguridad",
-                                color='Estado',
-                                color_discrete_map={'Seguro': '#2E8B57', 'Inseguro': '#DC143C'})
-                    
-                    fig4.update_layout(
-                        xaxis_title="Tipo",
-                        yaxis_title="Valor",
-                        height=300
-                    )
-                    
-                    fig4.update_traces(texttemplate='%{y:.2f}', textposition='outside')
-                    fig4.add_hline(y=1.0, line_dash="dash", line_color="red", annotation_text="Límite de Seguridad")
-                    st.plotly_chart(fig4, use_container_width=True)
+                    st.info("🔬 Realiza primero los cálculos en la pestaña 'Cálculos' para ver los gráficos")
                 
                 # Gráfico alternativo con matplotlib
                 elif MATPLOTLIB_AVAILABLE and plt is not None:
