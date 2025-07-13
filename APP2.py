@@ -59,14 +59,35 @@ def importar_matplotlib():
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         from matplotlib.patches import Rectangle, Polygon, Patch
-        MATPLOTLIB_AVAILABLE = True
-        return True
-    except ImportError:
+        
+        # Verificar que todas las importaciones fueron exitosas
+        if plt is not None and Rectangle is not None and Patch is not None:
+            MATPLOTLIB_AVAILABLE = True
+            print("✅ Matplotlib importado correctamente")
+            return True
+        else:
+            MATPLOTLIB_AVAILABLE = False
+            plt = None
+            Rectangle = None
+            Polygon = None
+            Patch = None
+            print("❌ Matplotlib importado pero componentes faltantes")
+            return False
+    except ImportError as e:
         MATPLOTLIB_AVAILABLE = False
         plt = None
         Rectangle = None
         Polygon = None
         Patch = None
+        print(f"❌ Error importando matplotlib: {e}")
+        return False
+    except Exception as e:
+        MATPLOTLIB_AVAILABLE = False
+        plt = None
+        Rectangle = None
+        Polygon = None
+        Patch = None
+        print(f"❌ Error inesperado importando matplotlib: {e}")
         return False
 
 # Verificación adicional para asegurar que matplotlib esté disponible
@@ -89,7 +110,7 @@ def verificar_matplotlib():
     global MATPLOTLIB_AVAILABLE, plt, Rectangle, Polygon, Patch
     
     # Si ya está disponible, no hacer nada
-    if MATPLOTLIB_AVAILABLE and plt is not None:
+    if MATPLOTLIB_AVAILABLE and plt is not None and Rectangle is not None and Patch is not None:
         return True
     
     # Intentar reimportar
@@ -161,6 +182,47 @@ def mostrar_error_matplotlib(key_suffix=""):
     
     **📋 Después de instalar, reinicia la aplicación.**
     """)
+
+def generar_visualizacion_texto_viga(b, h, d, tipo_fierro, cantidad_fierro, Av_estribo, s_estribos, zona_critica):
+    """Genera una visualización textual de la viga cuando matplotlib no está disponible"""
+    
+    # Crear representación ASCII de la viga
+    ancho_viz = min(b // 2, 40)  # Limitar ancho para visualización
+    alto_viz = min(h // 2, 20)   # Limitar alto para visualización
+    
+    # Dibujar contorno de la viga
+    viga_ascii = []
+    viga_ascii.append(f"┌{'─' * ancho_viz}┐")
+    viga_ascii.append(f"│{' ' * ancho_viz}│ h = {h} cm")
+    
+    # Líneas intermedias
+    for i in range(alto_viz - 2):
+        if i == alto_viz // 2:
+            viga_ascii.append(f"│{' ' * (ancho_viz//2)}d={d}cm{' ' * (ancho_viz//2-4)}│")
+        else:
+            viga_ascii.append(f"│{' ' * ancho_viz}│")
+    
+    viga_ascii.append(f"└{'─' * ancho_viz}┘")
+    viga_ascii.append(f"{' ' * (ancho_viz//2)}b = {b} cm")
+    
+    # Información adicional
+    info_adicional = f"""
+    **📐 Dimensiones:**
+    • Ancho (b): {b} cm
+    • Alto (h): {h} cm  
+    • Peralte efectivo (d): {d} cm
+    
+    **🔧 Acero:**
+    • Tipo principal: φ{tipo_fierro}
+    • Cantidad estribos: {cantidad_fierro}
+    • Área estribo: {Av_estribo} cm²
+    • Espaciamiento: {s_estribos:.1f} cm
+    
+    **⚠️ Estado:**
+    • Zona crítica: {'Sí' if zona_critica else 'No'}
+    """
+    
+    return viga_ascii, info_adicional
 
 # Verificación de reportlab
 try:
@@ -2020,8 +2082,17 @@ def dibujar_vista_frontal_viga(b, h, d, tipo_fierro, cantidad_fierro, Av_estribo
     if not MATPLOTLIB_AVAILABLE:
         importar_matplotlib()
     
-    if not MATPLOTLIB_AVAILABLE or plt is None:
-        return None
+    # Verificar que todas las dependencias estén disponibles
+    if not MATPLOTLIB_AVAILABLE or plt is None or Rectangle is None or Patch is None:
+        # Intentar importar localmente si las variables globales no están disponibles
+        try:
+            import matplotlib.pyplot as plt_local
+            from matplotlib.patches import Rectangle as Rectangle_local, Patch as Patch_local
+            plt = plt_local
+            Rectangle = Rectangle_local
+            Patch = Patch_local
+        except ImportError:
+            return None
         
     try:
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -4971,6 +5042,19 @@ Plan: Gratuito
                 
                 # Dibujar vista frontal de la viga
                 try:
+                    # Verificar matplotlib antes de intentar dibujar
+                    if not MATPLOTLIB_AVAILABLE:
+                        st.info("🔧 Verificando matplotlib...")
+                        if verificar_matplotlib():
+                            st.success("✅ Matplotlib disponible")
+                        else:
+                            st.warning("⚠️ Instalando matplotlib automáticamente...")
+                            if verificar_matplotlib():
+                                st.success("✅ Matplotlib instalado correctamente")
+                            else:
+                                st.error("❌ No se pudo instalar matplotlib automáticamente")
+                    
+                    # Intentar generar la visualización
                     fig_vista_frontal = dibujar_vista_frontal_viga(
                         b=b_corte,
                         h=h_corte,
@@ -5001,7 +5085,23 @@ Plan: Gratuito
                             st.write(f"• Peralte efectivo: {d_corte} cm")
                             st.write(f"• Estribos: {cantidad_fierro} φ{tipo_fierro}")
                     else:
-                        st.error("📊 Visualización no disponible - Matplotlib no está instalado")
+                        # Mostrar información alternativa cuando no hay visualización
+                        st.warning("📊 Visualización no disponible - Mostrando información alternativa")
+                        
+                        # Generar visualización textual
+                        viga_ascii, info_adicional = generar_visualizacion_texto_viga(
+                            b_corte, h_corte, d_corte, tipo_fierro, cantidad_fierro, 
+                            Av_estribo, s_estimado_viz, zona_critica_viz
+                        )
+                        
+                        # Información textual de la viga
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.info("**🏗️ Esquema de la Viga:**")
+                            st.code("\n".join(viga_ascii), language="text")
+                        
+                        with col2:
+                            st.markdown(info_adicional)
                         
                         # Botón para instalar matplotlib
                         if st.button("🔧 Instalar Matplotlib Automáticamente", type="primary", key="install_matplotlib_vista"):
