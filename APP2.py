@@ -2017,16 +2017,44 @@ def calcular_propiedades_acero(fy):
     return {'Es': Es, 'ey': ey}
 
 def calcular_predimensionamiento(L_viga, num_pisos, num_vanos, CM, CV, fc, fy):
+    """
+    Calcula el predimensionamiento según ACI 318 y E.060
+    """
+    # Espesor de losa (L/25 a L/30 según E.060)
     h_losa = max(L_viga / 25, 0.17)
-    d_viga = L_viga * 100 / 10
+    
+    # Peralte efectivo de viga (L/12 a L/15 según ACI 318)
+    d_viga = L_viga * 100 / 12  # L/12 más conservador
+    
+    # Ancho de viga (mínimo 25 cm según E.060)
     b_viga = max(0.3 * d_viga, 25)
-    P_servicio = num_pisos * (CM + 0.25*CV) * (L_viga*num_vanos)**2
-    P_mayorada = num_pisos * (1.2*CM + 1.6*CV) * (L_viga*num_vanos)**2
-    A_col_servicio = P_servicio / (0.45*fc)
-    A_col_resistencia = P_mayorada / (0.65*0.8*fc)
+    
+    # Carga por columna (área tributaria)
+    area_tributaria = (L_viga * num_vanos)**2  # m²
+    
+    # Carga de servicio por columna
+    P_servicio = num_pisos * (CM + 0.25*CV) * area_tributaria * 1000  # kg
+    
+    # Carga mayorada por columna
+    P_mayorada = num_pisos * (1.2*CM + 1.6*CV) * area_tributaria * 1000  # kg
+    
+    # Área de columna por servicio (φ = 0.65, fc' efectivo = 0.85*fc)
+    A_col_servicio = P_servicio / (0.65 * 0.85 * fc)
+    
+    # Área de columna por resistencia
+    A_col_resistencia = P_mayorada / (0.65 * 0.85 * fc)
+    
+    # Usar el mayor
     A_columna = max(A_col_servicio, A_col_resistencia)
     lado_columna = sqrt(A_columna)
-    return {'h_losa': h_losa, 'd_viga': d_viga, 'b_viga': b_viga, 'lado_columna': lado_columna, 'A_columna': A_columna}
+    
+    return {
+        'h_losa': h_losa, 
+        'd_viga': d_viga, 
+        'b_viga': b_viga, 
+        'lado_columna': lado_columna, 
+        'A_columna': A_columna
+    }
 
 def calcular_diseno_flexion(fc, fy, b, d, Mu):
     """
@@ -2116,20 +2144,29 @@ def calcular_diseno_columna(fc, fy, Ag, Ast, Pu):
     """
     Calcula el diseño de columna según ACI 318-2025
     """
-    # Resistencia nominal
-    Pn = 0.80 * (0.85 * fc * (Ag - Ast) + fy * Ast)
+    # Resistencia nominal (ACI 318-19 Sección 22.4.2.1)
+    Pn = 0.85 * fc * (Ag - Ast) + fy * Ast
     
-    # Factor phi para columnas con estribos
+    # Factor phi para columnas con estribos (ACI 318-19 Sección 21.2.1)
     phi = 0.65
     
     # Resistencia de diseño
     phiPn = phi * Pn
     
+    # Verificación de cuantías (ACI 318-19 Sección 10.6.1.1)
+    rho = Ast / Ag
+    rho_min = 0.01  # 1% mínimo
+    rho_max = 0.06  # 6% máximo
+    
     return {
         'Pn': Pn,
         'phiPn': phiPn,
         'phi': phi,
-        'verificacion': Pu <= phiPn
+        'rho': rho,
+        'rho_min': rho_min,
+        'rho_max': rho_max,
+        'verificacion': Pu <= phiPn,
+        'verificacion_cuantia': rho_min <= rho <= rho_max
     }
 
 def calcular_analisis_sismico(zona_sismica, tipo_suelo, factor_importancia, peso_total):
@@ -2835,8 +2872,11 @@ else:
                 props_acero = calcular_propiedades_acero(f_y)
                 predim = calcular_predimensionamiento(L_viga, num_pisos, num_vanos, CM, CV, f_c, f_y)
                 
-                # Calcular peso total
-                peso_total = float(num_pisos) * float(L_viga) * float(num_vanos) * float(h_piso) * float(f_c) / 1000
+                # Calcular peso total (más preciso)
+                # Peso por m² = (CM + CV) * área * num_pisos
+                area_total = float(L_viga) * float(num_vanos) * float(L_viga) * float(num_vanos)  # m²
+                peso_por_m2 = float(CM) + float(CV)  # kg/m²
+                peso_total = float(num_pisos) * area_total * peso_por_m2 / 1000  # ton
                 
                 # CÁLCULOS DE DISEÑO ESTRUCTURAL SEGÚN ACI 318-2025
                 
