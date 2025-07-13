@@ -33,67 +33,20 @@ MATPLOTLIB_AVAILABLE = False
 plt = None
 Rectangle = None
 Polygon = None
-Patch = None
 
 try:
     import matplotlib
-    matplotlib.use('Agg')  # Backend no interactivo para Streamlit
+    # Configurar backend de manera más robusta
+    try:
+        matplotlib.use('Agg')  # Backend no interactivo para Streamlit
+    except:
+        pass  # Si falla, continuar con el backend por defecto
     import matplotlib.pyplot as plt
-    from matplotlib.patches import Rectangle, Polygon, Patch
+    from matplotlib.patches import Rectangle, Polygon
     MATPLOTLIB_AVAILABLE = True
-    print("✅ Matplotlib importado correctamente")
-except ImportError as e:
+except ImportError:
     MATPLOTLIB_AVAILABLE = False
     plt = None
-    Rectangle = None
-    Polygon = None
-    Patch = None
-    print(f"❌ Error importando matplotlib: {e}")
-
-def importar_matplotlib():
-    """Función para importar matplotlib de manera robusta"""
-    global MATPLOTLIB_AVAILABLE, plt, Rectangle, Polygon, Patch
-    
-    try:
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        from matplotlib.patches import Rectangle, Polygon, Patch
-        
-        # Verificar que todas las importaciones fueron exitosas
-        if plt is not None and Rectangle is not None and Patch is not None:
-            MATPLOTLIB_AVAILABLE = True
-            print("✅ Matplotlib importado correctamente")
-            return True
-        else:
-            MATPLOTLIB_AVAILABLE = False
-            plt = None
-            Rectangle = None
-            Polygon = None
-            Patch = None
-            print("❌ Matplotlib importado pero componentes faltantes")
-            return False
-    except ImportError as e:
-        MATPLOTLIB_AVAILABLE = False
-        plt = None
-        Rectangle = None
-        Polygon = None
-        Patch = None
-        print(f"❌ Error importando matplotlib: {e}")
-        return False
-    except Exception as e:
-        MATPLOTLIB_AVAILABLE = False
-        plt = None
-        Rectangle = None
-        Polygon = None
-        Patch = None
-        print(f"❌ Error inesperado importando matplotlib: {e}")
-        return False
-
-# Verificación adicional para asegurar que matplotlib esté disponible
-if not MATPLOTLIB_AVAILABLE:
-    print("🔄 Reintentando importación de matplotlib...")
-    importar_matplotlib()
 
 # Verificación de plotly
 try:
@@ -103,126 +56,6 @@ try:
 except ImportError:
     PLOTLY_AVAILABLE = False
     # No mostrar warning aquí para evitar problemas en la carga inicial
-
-# Función para verificar e instalar matplotlib si es necesario
-def verificar_matplotlib():
-    """Verifica si matplotlib está disponible y lo instala si es necesario"""
-    global MATPLOTLIB_AVAILABLE, plt, Rectangle, Polygon, Patch
-    
-    # Si ya está disponible, no hacer nada
-    if MATPLOTLIB_AVAILABLE and plt is not None and Rectangle is not None and Patch is not None:
-        return True
-    
-    # Intentar reimportar
-    if importar_matplotlib():
-        return True
-    
-    # Si no funciona, intentar instalar
-    try:
-        import subprocess
-        import sys
-        import os
-        
-        print("🔧 Intentando instalar matplotlib...")
-        
-        # Verificar si estamos en un entorno virtual o conda
-        if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
-            # Entorno virtual
-            pip_cmd = [sys.executable, "-m", "pip", "install", "matplotlib", "--quiet"]
-        else:
-            # Entorno global
-            pip_cmd = [sys.executable, "-m", "pip", "install", "matplotlib", "--user", "--quiet"]
-        
-        # Ejecutar instalación
-        result = subprocess.run(pip_cmd, capture_output=True, text=True, timeout=60)
-        
-        if result.returncode == 0:
-            print("✅ Matplotlib instalado exitosamente")
-            
-            # Reintentar importación después de instalar
-            if importar_matplotlib():
-                print("✅ Matplotlib importado correctamente después de la instalación")
-                return True
-            else:
-                print("❌ No se pudo importar matplotlib después de la instalación")
-                return False
-        else:
-            print(f"❌ Error en la instalación: {result.stderr}")
-            return False
-            
-    except subprocess.TimeoutExpired:
-        print("❌ Timeout en la instalación de matplotlib")
-        return False
-    except Exception as e:
-        print(f"❌ No se pudo instalar matplotlib: {e}")
-        return False
-
-def mostrar_error_matplotlib(key_suffix=""):
-    """Muestra el mensaje de error de matplotlib con opciones de instalación"""
-    st.error("📊 Visualización no disponible - Matplotlib no está instalado")
-    
-    # Botón para instalar matplotlib
-    if st.button("🔧 Instalar Matplotlib Automáticamente", key=f"install_matplotlib_{key_suffix}"):
-        with st.spinner("Instalando matplotlib..."):
-            if verificar_matplotlib():
-                st.success("✅ Matplotlib instalado correctamente")
-                st.rerun()
-            else:
-                st.error("❌ No se pudo instalar matplotlib automáticamente")
-                st.info("💡 Ejecuta manualmente: pip install matplotlib")
-    
-    # Información adicional
-    st.info("""
-    **🔧 Para solucionar este problema:**
-    
-    1. **Opción 1:** Ejecuta `pip install matplotlib` en tu terminal
-    2. **Opción 2:** Usa el botón de arriba para instalación automática
-    3. **Opción 3:** Ejecuta `python instalar_dependencias.py`
-    4. **Opción 4:** Ejecuta `INSTALAR_DEPENDENCIAS.bat` (Windows)
-    
-    **📋 Después de instalar, reinicia la aplicación.**
-    """)
-
-def generar_visualizacion_texto_viga(b, h, d, tipo_fierro, cantidad_fierro, Av_estribo, s_estribos, zona_critica):
-    """Genera una visualización textual de la viga cuando matplotlib no está disponible"""
-    
-    # Crear representación ASCII de la viga
-    ancho_viz = min(b // 2, 40)  # Limitar ancho para visualización
-    alto_viz = min(h // 2, 20)   # Limitar alto para visualización
-    
-    # Dibujar contorno de la viga
-    viga_ascii = []
-    viga_ascii.append(f"┌{'─' * ancho_viz}┐")
-    viga_ascii.append(f"│{' ' * ancho_viz}│ h = {h} cm")
-    
-    # Líneas intermedias
-    for i in range(alto_viz - 2):
-        if i == alto_viz // 2:
-            viga_ascii.append(f"│{' ' * (ancho_viz//2)}d={d}cm{' ' * (ancho_viz//2-4)}│")
-        else:
-            viga_ascii.append(f"│{' ' * ancho_viz}│")
-    
-    viga_ascii.append(f"└{'─' * ancho_viz}┘")
-    viga_ascii.append(f"{' ' * (ancho_viz//2)}b = {b} cm")
-    
-    # Información adicional
-    info_adicional = f"""
-    **📐 Dimensiones:**
-    • Ancho (b): {b} cm
-    • Alto (h): {h} cm  
-    • Peralte efectivo (d): {d} cm
-    
-    **🔧 Acero:**
-    • Tipo principal: φ{tipo_fierro}
-    • Cantidad estribos: {cantidad_fierro}
-    • Área estribo: {Av_estribo} cm²
-    • Espaciamiento: {s_estribos:.1f} cm
-    
-    **⚠️ Estado:**
-    • Zona crítica: {'Sí' if zona_critica else 'No'}
-    """
-    
-    return viga_ascii, info_adicional
 
 # Verificación de reportlab
 try:
@@ -1698,7 +1531,7 @@ def calcular_diseno_columnas_detallado(fc, fy, Ag, Ast, Pu, Mu=0):
         'verificacion_cuantia': rho_min <= rho <= rho_max
     }
 
-def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, cantidad_fierro=0, Av_estribo=0.71):
+def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, num_estribos=0):
     """
     Calcula el ejercicio básico de corte según las fórmulas del PDF con datos completos
     """
@@ -1726,8 +1559,8 @@ def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, ca
         # Calcular Vs requerido
         Vs_requerido = Vu_final - phiVc
         
-        # Usar área del estribo seleccionado
-        Av = Av_estribo
+        # Asumir estribos #3 (Av = 0.71 cm²)
+        Av = 0.71
         
         # Espaciamiento de estribos
         s = Av * fy * d / Vs_requerido
@@ -1749,9 +1582,9 @@ def calcular_ejercicio_basico_corte(fc, b, d, Vu, fy=4200, L=6.0, CM=0, CV=0, ca
     Av_min = 0.2 * sqrt(fc) * b * s_final / fy
     
     # Cálculo de estribos
-    if cantidad_fierro > 0:
-        # Calcular espaciamiento basado en cantidad de fierro
-        s_por_estribo = L * 100 / cantidad_fierro  # cm
+    if num_estribos > 0:
+        # Calcular espaciamiento basado en número de estribos
+        s_por_estribo = L * 100 / num_estribos  # cm
         s_estribado = min(s_por_estribo, s_final)
     else:
         s_estribado = s_final
@@ -1865,363 +1698,6 @@ def graficar_diagrama_cortantes(L, Vu, phiVc, phiVc_mitad, w_total=0):
 
 @safe_matplotlib_plot
 def graficar_estribado_viga(L, d, s_critica, s_no_critica, b=25):
-    """
-    Grafica el estribado de la viga según los resultados
-    """
-    if not MATPLOTLIB_AVAILABLE or plt is None:
-        return None
-        
-    try:
-        fig, ax = plt.subplots(figsize=(15, 8))
-        
-        # Escala para visualización
-        escala = 100  # 1 unidad = 1 cm
-        
-        # Dimensiones de la viga
-        ancho = b / escala
-        alto = d / escala
-        largo = L
-        
-        # Dibujar viga
-        rect_viga = Rectangle((0, 0), largo, alto, linewidth=2, edgecolor='black', facecolor='lightgray', alpha=0.7)
-        ax.add_patch(rect_viga)
-        
-        # Zona crítica (primeros d cm)
-        zona_critica = Rectangle((0, 0), d/100, alto, linewidth=1, edgecolor='red', facecolor='red', alpha=0.2)
-        ax.add_patch(zona_critica)
-        
-        # Zona no crítica
-        zona_no_critica = Rectangle((d/100, 0), largo - d/100, alto, linewidth=1, edgecolor='blue', facecolor='blue', alpha=0.1)
-        ax.add_patch(zona_no_critica)
-        
-        # Dibujar estribos en zona crítica
-        if s_critica > 0:
-            num_estribos_critica = int(d / s_critica)
-            for i in range(num_estribos_critica):
-                x = (d / num_estribos_critica) * i / 100
-                rect_estribo = Rectangle((x, 0), 0.05, alto, linewidth=1, edgecolor='red', facecolor='red', alpha=0.5)
-                ax.add_patch(rect_estribo)
-        
-        # Dibujar estribos en zona no crítica
-        if s_no_critica > 0:
-            num_estribos_no_critica = int((L * 100 - d) / s_no_critica)
-            for i in range(num_estribos_no_critica):
-                x = d/100 + (L * 100 - d) * i / num_estribos_no_critica / 100
-                rect_estribo = Rectangle((x, 0), 0.05, alto, linewidth=1, edgecolor='blue', facecolor='blue', alpha=0.3)
-                ax.add_patch(rect_estribo)
-        
-        # Configurar gráfico
-        ax.set_xlim(-0.1, largo + 0.1)
-        ax.set_ylim(-0.1, alto + 0.1)
-        ax.set_aspect('equal')
-        ax.set_title('Estribado de la Viga - Vista Lateral', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Longitud (m)')
-        ax.set_ylabel('Altura (m)')
-        ax.grid(True, alpha=0.3)
-        
-        # Agregar leyenda
-        legend_elements = [
-            Patch(facecolor='red', alpha=0.2, label='Zona Crítica'),
-            Patch(facecolor='blue', alpha=0.1, label='Zona No Crítica'),
-            Patch(facecolor='red', alpha=0.5, label='Estribos Críticos'),
-            Patch(facecolor='blue', alpha=0.3, label='Estribos No Críticos')
-        ]
-        ax.legend(handles=legend_elements, loc='upper right')
-        
-        plt.tight_layout()
-        return fig
-        
-    except Exception as e:
-        print(f"Error graficando estribado de viga: {str(e)}")
-        return None
-
-@safe_matplotlib_plot
-def dibujar_corte_lateral_derecho(b, h, d, cantidad_fierro, tipo_fierro, Av_estribo, s_estribos, zona_critica):
-    """
-    Dibuja el corte lateral derecho de la viga mostrando estribos, cantidad de fierros y doblado
-    """
-    if not MATPLOTLIB_AVAILABLE or plt is None:
-        return None
-        
-    try:
-        fig, ax = plt.subplots(figsize=(8, 10))
-        
-        # Escala para visualización
-        escala = 1  # 1 unidad = 1 cm
-        
-        # Dimensiones
-        ancho = b
-        alto = h
-        
-        # Dibujar contorno de la viga
-        rect_viga = Rectangle((0, 0), ancho, alto, linewidth=3, edgecolor='black', facecolor='#f0f0f0', alpha=0.8)
-        ax.add_patch(rect_viga)
-        
-        # Dibujar recubrimiento (6 cm desde los bordes)
-        recubrimiento = 6
-        rect_recubrimiento = Rectangle((recubrimiento, recubrimiento), ancho-2*recubrimiento, alto-2*recubrimiento, 
-                                     linewidth=2, edgecolor='red', facecolor='none', linestyle='--', alpha=0.7)
-        ax.add_patch(rect_recubrimiento)
-        
-        # Dibujar estribos
-        if cantidad_fierro > 0 and s_estribos > 0:
-            # Calcular número de estribos que caben en la altura
-            num_estribos_altura = int((alto - 2*recubrimiento) / s_estribos)
-            
-            # Dibujar estribos verticales
-            for i in range(min(num_estribos_altura, 8)):  # Máximo 8 estribos para visualización
-                y = recubrimiento + i * s_estribos
-                if y + 2 <= alto - recubrimiento:  # Verificar que no se salga de la viga
-                    # Estribo vertical izquierdo
-                    estribo_izq = Rectangle((recubrimiento, y), 2, 2, linewidth=1, edgecolor='blue', facecolor='blue', alpha=0.7)
-                    ax.add_patch(estribo_izq)
-                    # Estribo vertical derecho
-                    estribo_der = Rectangle((ancho-recubrimiento-2, y), 2, 2, linewidth=1, edgecolor='blue', facecolor='blue', alpha=0.7)
-                    ax.add_patch(estribo_der)
-                    
-                    # Líneas horizontales del estribo
-                    ax.plot([recubrimiento, ancho-recubrimiento], [y, y], 'b-', linewidth=2, alpha=0.7)
-                    ax.plot([recubrimiento, ancho-recubrimiento], [y+2, y+2], 'b-', linewidth=2, alpha=0.7)
-                    
-                    # Agregar número de estribo
-                    ax.text(ancho/2, y+1, f"{i+1}", ha='center', va='center', fontsize=6, color='white', fontweight='bold')
-        
-        # Dibujar acero longitudinal (barras principales)
-        # Barras inferiores
-        num_barras_inf = 4  # Típicamente 4 barras inferiores
-        for i in range(num_barras_inf):
-            x = recubrimiento + 3 + i * ((ancho - 2*recubrimiento - 6) / (num_barras_inf - 1))
-            y = recubrimiento + 3
-            circulo = plt.Circle((x, y), 1.5, color='orange', alpha=0.8)
-            ax.add_patch(circulo)
-            ax.text(x, y, f"φ{tipo_fierro}", ha='center', va='center', fontsize=8, color='white', fontweight='bold')
-        
-        # Barras superiores
-        num_barras_sup = 2  # Típicamente 2 barras superiores
-        for i in range(num_barras_sup):
-            x = recubrimiento + 3 + i * ((ancho - 2*recubrimiento - 6) / (num_barras_sup - 1))
-            y = alto - recubrimiento - 3
-            circulo = plt.Circle((x, y), 1.5, color='orange', alpha=0.8)
-            ax.add_patch(circulo)
-            ax.text(x, y, f"φ{tipo_fierro}", ha='center', va='center', fontsize=8, color='white', fontweight='bold')
-        
-        # Dibujar doblado de estribos (ganchos)
-        if cantidad_fierro > 0:
-            # Ganchos en la parte superior e inferior
-            for y in [recubrimiento, alto-recubrimiento]:
-                # Gancho izquierdo
-                ax.plot([recubrimiento-3, recubrimiento], [y, y], 'b-', linewidth=2, alpha=0.7)
-                ax.plot([recubrimiento, recubrimiento], [y, y+3], 'b-', linewidth=2, alpha=0.7)
-                # Gancho derecho
-                ax.plot([ancho-recubrimiento, ancho-recubrimiento+3], [y, y], 'b-', linewidth=2, alpha=0.7)
-                ax.plot([ancho-recubrimiento, ancho-recubrimiento], [y, y+3], 'b-', linewidth=2, alpha=0.7)
-                
-                # Agregar anotaciones de doblado
-                ax.text(recubrimiento-4, y+1.5, "90°", ha='center', va='center', fontsize=8, color='blue', fontweight='bold')
-                ax.text(ancho-recubrimiento+4, y+1.5, "90°", ha='center', va='center', fontsize=8, color='blue', fontweight='bold')
-        
-        # Agregar cotas y anotaciones
-        ax.annotate(f'b = {b} cm', xy=(ancho/2, -2), ha='center', fontsize=12, color='blue')
-        ax.annotate(f'h = {h} cm', xy=(ancho+2, alto/2), va='center', fontsize=12, color='blue', rotation=90)
-        ax.annotate(f'd = {d} cm', xy=(ancho+2, d), va='center', fontsize=12, color='red', rotation=90)
-        
-        # Agregar información de estribos
-        ax.text(ancho/2, alto+2, f'Estribos: {cantidad_fierro} φ{tipo_fierro} @ {s_estribos:.1f}cm', 
-                ha='center', fontsize=10, color='blue', fontweight='bold')
-        
-        # Agregar información de zona crítica
-        if zona_critica:
-            ax.text(ancho/2, alto+4, 'ZONA CRÍTICA - Requiere refuerzo', 
-                    ha='center', fontsize=12, color='red', fontweight='bold')
-            ax.text(ancho/2, alto+6, f'Espaciamiento máximo: {s_estribos:.1f} cm', 
-                    ha='center', fontsize=10, color='red')
-        else:
-            ax.text(ancho/2, alto+4, 'ZONA NO CRÍTICA - Estribos mínimos', 
-                    ha='center', fontsize=12, color='green', fontweight='bold')
-            ax.text(ancho/2, alto+6, f'Espaciamiento máximo: {s_estribos:.1f} cm', 
-                    ha='center', fontsize=10, color='green')
-        
-        # Agregar información de doblado
-        ax.text(ancho/2, alto+8, 'Doblado: 90° con ganchos de 6db (ACI 318-19)', 
-                ha='center', fontsize=9, color='blue')
-        
-        # Configurar gráfico
-        ax.set_xlim(-5, ancho+10)
-        ax.set_ylim(-5, alto+12)
-        ax.set_aspect('equal')
-        ax.set_title('Corte Lateral Derecho - Viga con Estribos', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Ancho (cm)')
-        ax.set_ylabel('Altura (cm)')
-        ax.grid(True, alpha=0.3)
-        
-        # Agregar leyenda
-        legend_elements = [
-            Patch(facecolor='orange', alpha=0.8, label='Acero Longitudinal'),
-            Patch(facecolor='blue', alpha=0.7, label='Estribos'),
-            Patch(facecolor='red', alpha=0.3, label='Recubrimiento')
-        ]
-        ax.legend(handles=legend_elements, loc='upper left')
-        
-        plt.tight_layout()
-        return fig
-        
-    except Exception as e:
-        print(f"Error dibujando corte lateral: {str(e)}")
-        return None
-
-@safe_matplotlib_plot
-def dibujar_vista_frontal_viga(b, h, d, tipo_fierro, cantidad_fierro, Av_estribo, s_estribos, zona_critica):
-    """
-    Dibuja la vista frontal de la viga mostrando acero de temperatura y estribos
-    """
-    # Verificar matplotlib antes de intentar dibujar
-    if not MATPLOTLIB_AVAILABLE:
-        verificar_matplotlib()
-    
-    # Reintentar importación si es necesario
-    if not MATPLOTLIB_AVAILABLE:
-        importar_matplotlib()
-    
-    # Verificar que todas las dependencias estén disponibles
-    if not MATPLOTLIB_AVAILABLE or plt is None or Rectangle is None or Patch is None:
-        # Intentar importar localmente si las variables globales no están disponibles
-        try:
-            import matplotlib.pyplot as plt_local
-            from matplotlib.patches import Rectangle as Rectangle_local, Patch as Patch_local
-            plt = plt_local
-            Rectangle = Rectangle_local
-            Patch = Patch_local
-        except ImportError:
-            return None
-        
-    try:
-        fig, ax = plt.subplots(figsize=(10, 8))
-        
-        # Escala para visualización
-        escala = 1  # 1 unidad = 1 cm
-        
-        # Dimensiones
-        ancho = b
-        alto = h
-        
-        # Dibujar contorno de la viga
-        rect_viga = Rectangle((0, 0), ancho, alto, linewidth=3, edgecolor='black', facecolor='#f0f0f0', alpha=0.8)
-        ax.add_patch(rect_viga)
-        
-        # Dibujar recubrimiento (6 cm desde los bordes)
-        recubrimiento = 6
-        rect_recubrimiento = Rectangle((recubrimiento, recubrimiento), ancho-2*recubrimiento, alto-2*recubrimiento, 
-                                     linewidth=2, edgecolor='red', facecolor='none', linestyle='--', alpha=0.7)
-        ax.add_patch(rect_recubrimiento)
-        
-        # Dibujar acero longitudinal principal (barras inferiores)
-        num_barras_principales = 4  # Típicamente 4 barras principales
-        for i in range(num_barras_principales):
-            x = recubrimiento + 3 + i * ((ancho - 2*recubrimiento - 6) / (num_barras_principales - 1))
-            y = recubrimiento + 3
-            circulo = plt.Circle((x, y), 1.5, color='orange', alpha=0.8)
-            ax.add_patch(circulo)
-            ax.text(x, y, f"φ{tipo_fierro}", ha='center', va='center', fontsize=8, color='white', fontweight='bold')
-        
-        # Dibujar acero longitudinal superior (barras superiores)
-        num_barras_superiores = 2  # Típicamente 2 barras superiores
-        for i in range(num_barras_superiores):
-            x = recubrimiento + 3 + i * ((ancho - 2*recubrimiento - 6) / (num_barras_superiores - 1))
-            y = alto - recubrimiento - 3
-            circulo = plt.Circle((x, y), 1.5, color='orange', alpha=0.8)
-            ax.add_patch(circulo)
-            ax.text(x, y, f"φ{tipo_fierro}", ha='center', va='center', fontsize=8, color='white', fontweight='bold')
-        
-        # Dibujar acero de temperatura (barras laterales)
-        # Acero de temperatura en los lados (típicamente φ3/8" o φ1/2")
-        tipo_temp = "3/8\""  # Acero de temperatura típico
-        
-        # Acero de temperatura izquierdo
-        y_temp_izq = recubrimiento + 3
-        circulo_temp_izq = plt.Circle((recubrimiento + 1.5, y_temp_izq), 1.2, color='green', alpha=0.8)
-        ax.add_patch(circulo_temp_izq)
-        ax.text(recubrimiento + 1.5, y_temp_izq, f"φ{tipo_temp}", ha='center', va='center', fontsize=7, color='white', fontweight='bold')
-        
-        # Acero de temperatura derecho
-        y_temp_der = recubrimiento + 3
-        circulo_temp_der = plt.Circle((ancho - recubrimiento - 1.5, y_temp_der), 1.2, color='green', alpha=0.8)
-        ax.add_patch(circulo_temp_der)
-        ax.text(ancho - recubrimiento - 1.5, y_temp_der, f"φ{tipo_temp}", ha='center', va='center', fontsize=7, color='white', fontweight='bold')
-        
-        # Acero de temperatura superior izquierdo
-        y_temp_sup_izq = alto - recubrimiento - 3
-        circulo_temp_sup_izq = plt.Circle((recubrimiento + 1.5, y_temp_sup_izq), 1.2, color='green', alpha=0.8)
-        ax.add_patch(circulo_temp_sup_izq)
-        ax.text(recubrimiento + 1.5, y_temp_sup_izq, f"φ{tipo_temp}", ha='center', va='center', fontsize=7, color='white', fontweight='bold')
-        
-        # Acero de temperatura superior derecho
-        y_temp_sup_der = alto - recubrimiento - 3
-        circulo_temp_sup_der = plt.Circle((ancho - recubrimiento - 1.5, y_temp_sup_der), 1.2, color='green', alpha=0.8)
-        ax.add_patch(circulo_temp_sup_der)
-        ax.text(ancho - recubrimiento - 1.5, y_temp_sup_der, f"φ{tipo_temp}", ha='center', va='center', fontsize=7, color='white', fontweight='bold')
-        
-        # Dibujar estribos (vista frontal - solo se ven los extremos)
-        if cantidad_fierro > 0 and s_estribos > 0:
-            # Calcular número de estribos que caben en la altura
-            num_estribos_altura = int((alto - 2*recubrimiento) / s_estribos)
-            
-            # Dibujar estribos como líneas horizontales
-            for i in range(min(num_estribos_altura, 6)):  # Máximo 6 estribos para visualización
-                y = recubrimiento + i * s_estribos
-                if y + 2 <= alto - recubrimiento:  # Verificar que no se salga de la viga
-                    # Línea horizontal del estribo
-                    ax.plot([recubrimiento, ancho-recubrimiento], [y, y], 'b-', linewidth=3, alpha=0.7)
-                    ax.plot([recubrimiento, ancho-recubrimiento], [y+2, y+2], 'b-', linewidth=3, alpha=0.7)
-                    
-                    # Agregar número de estribo
-                    ax.text(ancho/2, y+1, f"{i+1}", ha='center', va='center', fontsize=6, color='white', fontweight='bold', 
-                           bbox=dict(boxstyle="round,pad=0.2", facecolor='blue', alpha=0.8))
-        
-        # Agregar cotas y anotaciones
-        ax.annotate(f'b = {b} cm', xy=(ancho/2, -2), ha='center', fontsize=12, color='blue')
-        ax.annotate(f'h = {h} cm', xy=(ancho+2, alto/2), va='center', fontsize=12, color='blue', rotation=90)
-        ax.annotate(f'd = {d} cm', xy=(ancho+2, d), va='center', fontsize=12, color='red', rotation=90)
-        
-        # Agregar información de acero
-        ax.text(ancho/2, alto+2, f'Acero Principal: φ{tipo_fierro} - Estribos: {cantidad_fierro} φ{tipo_fierro} @ {s_estribos:.1f}cm', 
-                ha='center', fontsize=10, color='blue', fontweight='bold')
-        
-        # Agregar información de acero de temperatura
-        ax.text(ancho/2, alto+4, f'Acero de Temperatura: φ{tipo_temp} (4 barras)', 
-                ha='center', fontsize=10, color='green', fontweight='bold')
-        
-        # Agregar información de zona crítica
-        if zona_critica:
-            ax.text(ancho/2, alto+6, 'ZONA CRÍTICA - Requiere refuerzo', 
-                    ha='center', fontsize=12, color='red', fontweight='bold')
-        else:
-            ax.text(ancho/2, alto+6, 'ZONA NO CRÍTICA - Estribos mínimos', 
-                    ha='center', fontsize=12, color='green', fontweight='bold')
-        
-        # Configurar gráfico
-        ax.set_xlim(-5, ancho+10)
-        ax.set_ylim(-5, alto+10)
-        ax.set_aspect('equal')
-        ax.set_title('Vista Frontal - Viga con Acero de Temperatura y Estribos', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Ancho (cm)')
-        ax.set_ylabel('Altura (cm)')
-        ax.grid(True, alpha=0.3)
-        
-        # Agregar leyenda
-        legend_elements = [
-            Patch(facecolor='orange', alpha=0.8, label='Acero Principal'),
-            Patch(facecolor='green', alpha=0.8, label='Acero de Temperatura'),
-            Patch(facecolor='blue', alpha=0.7, label='Estribos'),
-            Patch(facecolor='red', alpha=0.3, label='Recubrimiento')
-        ]
-        ax.legend(handles=legend_elements, loc='upper left')
-        
-        plt.tight_layout()
-        return fig
-        
-    except Exception as e:
-        print(f"Error dibujando vista frontal: {str(e)}")
-        return None
     """
     Grafica el estribado de la viga según los resultados
     """
@@ -2936,20 +2412,6 @@ def show_payment_form(plan):
 
 def show_auth_page():
     st.title("🏗️ CONSORCIO DEJ - Análisis Estructural")
-    
-    # =====================
-    # VERIFICACIÓN INICIAL DE MATPLOTLIB
-    # =====================
-    if not MATPLOTLIB_AVAILABLE:
-        st.warning("⚠️ Matplotlib no está disponible. Algunas visualizaciones no funcionarán.")
-        if st.button("🔧 Instalar Matplotlib Ahora", key="install_matplotlib_inicial"):
-            with st.spinner("Instalando matplotlib..."):
-                if verificar_matplotlib():
-                    st.success("✅ Matplotlib instalado correctamente. Reiniciando aplicación...")
-                    st.rerun()
-                else:
-                    st.error("❌ No se pudo instalar matplotlib automáticamente")
-                    st.info("💡 Ejecuta manualmente: pip install matplotlib")
     
     # Pestañas para login/registro
     tab1, tab2, tab3 = st.tabs(["🔐 Iniciar Sesión", "📝 Registrarse", "💰 Planes y Precios"])
@@ -4878,111 +4340,18 @@ Plan: Gratuito
                 col1, col2 = st.columns(2)
                 with col1:
                     st.markdown("**🏗️ Propiedades de la Viga:**")
-                    
-                    # Cargar valores guardados o usar valores por defecto
-                    fc_default = st.session_state.get('fc_corte', 210)
-                    b_default = st.session_state.get('b_corte', 25)
-                    h_default = st.session_state.get('h_corte', 60)
-                    d_default = st.session_state.get('d_corte', 54)
-                    L_default = st.session_state.get('L_corte', 6.0)
-                    fy_default = st.session_state.get('fy_corte', 4200)
-                    
-                    fc_corte = st.number_input("f'c (kg/cm²)", 175, 700, fc_default, 10, key="fc_corte")
-                    b_corte = st.number_input("Ancho de Viga b (cm)", 20, 100, b_default, 1, key="b_corte")
-                    h_corte = st.number_input("Peralte Total h (cm)", 35, 120, h_default, 1, key="h_corte")
-                    d_corte = st.number_input("Peralte Efectivo d (cm)", 30, 100, d_default, 1, key="d_corte")
-                    L_corte = st.number_input("Luz de la Viga L (m)", 3.0, 15.0, L_default, 0.5, key="L_corte")
-                    fy_corte = st.number_input("fy (kg/cm²)", 2800, 6000, fy_default, 100, key="fy_corte")
-                    
-                    # Mostrar relación recomendada d/h
-                    if h_corte > 0:
-                        d_recomendado = h_corte - 6  # 6 cm de recubrimiento
-                        if abs(d_corte - d_recomendado) > 2:
-                            st.info(f"💡 Peralte efectivo recomendado: {d_recomendado} cm")
+                    fc_corte = st.number_input("f'c (kg/cm²)", 175, 700, 210, 10, key="fc_corte")
+                    b_corte = st.number_input("Ancho de Viga b (cm)", 20, 100, 25, 1, key="b_corte")
+                    d_corte = st.number_input("Peralte Efectivo d (cm)", 30, 100, 54, 1, key="d_corte")
+                    L_corte = st.number_input("Luz de la Viga L (m)", 3.0, 15.0, 6.0, 0.5, key="L_corte")
+                    fy_corte = st.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, key="fy_corte")
                 
                 with col2:
                     st.markdown("**⚖️ Cargas y Fuerzas:**")
-                    
-                    # Cargar valores guardados o usar valores por defecto
-                    CM_default = st.session_state.get('CM_corte', 350)
-                    CV_default = st.session_state.get('CV_corte', 250)
-                    Vu_default = st.session_state.get('Vu_corte', 18000)
-                    cantidad_default = st.session_state.get('cantidad_fierro', 12)
-                    tipo_default = st.session_state.get('tipo_fierro', "3/8\"")
-                    
-                    CM_corte = st.number_input("Carga Muerta CM (kg/m²)", 0, 5000, CM_default, 50, key="CM_corte")
-                    CV_corte = st.number_input("Carga Viva CV (kg/m²)", 0, 3000, CV_default, 50, key="CV_corte")
-                    Vu_corte = st.number_input("Cortante Último Vu (kg)", 1000, 100000, Vu_default, 100, key="Vu_corte")
-                    
-                    # Calcular Vu estimado basado en cargas
-                    w_estimado = (CM_corte + CV_corte) * b_corte / 100  # kg/m
-                    Vu_estimado = w_estimado * L_corte / 2  # kg
-                    if w_estimado > 0:
-                        st.info(f"💡 Vu estimado por cargas: {Vu_estimado:.0f} kg")
-                    
-                    st.markdown("**🔧 Propiedades de Estribos:**")
-                    # Cantidad de fierro
-                    cantidad_fierro = st.number_input("Cantidad de Fierro", 0, 100, cantidad_default, 1, key="cantidad_fierro")
-                    
-                    # Tipo de fierro
-                    tipo_fierro = st.selectbox(
-                        "Tipo de Fierro",
-                        ["3/8\"", "1/2\"", "5/8\"", "3/4\"", "1\""],
-                        index=0,
-                        key="tipo_fierro"
-                    )
-                    
-                    # Calcular área del estribo según el tipo seleccionado
-                    areas_estribos = {
-                        "3/8\"": 0.71,  # cm²
-                        "1/2\"": 1.27,  # cm²
-                        "5/8\"": 1.98,  # cm²
-                        "3/4\"": 2.85,  # cm²
-                        "1\"": 5.07     # cm²
-                    }
-                    
-                    Av_estribo = areas_estribos[tipo_fierro]
-                    st.info(f"Área del estribo {tipo_fierro}: {Av_estribo} cm²")
-                    
-                    # Calcular espaciamiento estimado
-                    if cantidad_fierro > 0 and L_corte > 0:
-                        s_estimado = L_corte * 100 / cantidad_fierro  # cm
-                        st.info(f"💡 Espaciamiento estimado: {s_estimado:.1f} cm")
-                    
-                    # Validación del peralte
-                    if d_corte >= h_corte:
-                        st.warning("⚠️ El peralte efectivo debe ser menor que el peralte total")
-                        st.info("Recomendación: d = h - 6 cm (recubrimiento)")
-                
-                # Botones de acción
-                st.markdown("---")
-                col1, col2, col3 = st.columns([1, 1, 1])
-                
-                with col1:
-                    if st.button("💾 Guardar Datos", type="secondary", key="guardar_datos_corte"):
-                        # Los datos ya se guardan automáticamente, solo mostrar confirmación
-                        st.success("✅ Datos guardados automáticamente")
-                
-                with col2:
-                    if st.button("🗑️ Limpiar Datos", type="secondary", key="limpiar_datos_corte"):
-                        # Limpiar datos guardados
-                        keys_to_clear = ['fc_corte', 'b_corte', 'h_corte', 'd_corte', 'L_corte', 'fy_corte',
-                                       'CM_corte', 'CV_corte', 'Vu_corte', 'cantidad_fierro', 'tipo_fierro',
-                                       'resultados_corte', 'datos_entrada_corte']
-                        for key in keys_to_clear:
-                            if key in st.session_state:
-                                del st.session_state[key]
-                        st.success("✅ Datos limpiados")
-                        st.rerun()
-                
-                with col3:
-                    if st.button("📊 Generar PDF", type="secondary", key="generar_pdf_corte"):
-                        if 'resultados_corte' in st.session_state and 'datos_entrada_corte' in st.session_state:
-                            st.info("📄 Generando PDF...")
-                            # Aquí se podría implementar la generación de PDF
-                            st.success("✅ PDF generado (funcionalidad en desarrollo)")
-                        else:
-                            st.warning("⚠️ Primero debe calcular el ejercicio de corte")
+                    CM_corte = st.number_input("Carga Muerta CM (kg/m²)", 0, 5000, 150, 50, key="CM_corte")
+                    CV_corte = st.number_input("Carga Viva CV (kg/m²)", 0, 3000, 200, 50, key="CV_corte")
+                    Vu_corte = st.number_input("Cortante Último Vu (kg)", 1000, 100000, 16600, 100, key="Vu_corte")
+                    num_estribos = st.number_input("Cantidad de Fierro Corte (estribos)", 0, 100, 0, 1, key="num_estribos")
                 
                 # Información adicional
                 st.markdown("---")
@@ -5008,230 +4377,27 @@ Plan: Gratuito
                     
                     **Factor φ = 0.75** (ACI 318-19)
                     """, unsafe_allow_html=True)
-                
-                # Visualización de la viga en vista frontal
-                st.markdown("---")
-                st.markdown("**🏗️ Visualización de la Viga - Vista Frontal:**")
-                
-                # Calcular espaciamiento estimado para la visualización
-                s_estimado_viz = L_corte * 100 / cantidad_fierro if cantidad_fierro > 0 else 25
-                
-                # Determinar si es zona crítica (simplificado para visualización)
-                zona_critica_viz = Vu_corte > 8000  # Simplificado para visualización
-                
-                # Guardar datos automáticamente en session state
-                datos_entrada_actuales = {
-                    'fc': fc_corte, 'b': b_corte, 'h': h_corte, 'd': d_corte, 'L': L_corte,
-                    'fy': fy_corte, 'CM': CM_corte, 'CV': CV_corte, 'Vu': Vu_corte,
-                    'cantidad_fierro': cantidad_fierro, 'tipo_fierro': tipo_fierro, 'Av_estribo': Av_estribo
-                }
-                st.session_state['datos_entrada_corte'] = datos_entrada_actuales
-                
-                # Verificar matplotlib antes de intentar dibujar
-                if not MATPLOTLIB_AVAILABLE:
-                    # Intentar instalar matplotlib automáticamente
-                    if verificar_matplotlib():
-                        st.success("✅ Matplotlib instalado automáticamente")
-                    else:
-                        st.warning("⚠️ Instalando matplotlib...")
-                        # Reintentar una vez más
-                        if verificar_matplotlib():
-                            st.success("✅ Matplotlib instalado correctamente")
-                        else:
-                            st.error("❌ No se pudo instalar matplotlib automáticamente")
-                
-                # Dibujar vista frontal de la viga
-                try:
-                    # Verificar matplotlib antes de intentar dibujar
-                    if not MATPLOTLIB_AVAILABLE:
-                        st.info("🔧 Verificando matplotlib...")
-                        if verificar_matplotlib():
-                            st.success("✅ Matplotlib disponible")
-                        else:
-                            st.warning("⚠️ Instalando matplotlib automáticamente...")
-                            if verificar_matplotlib():
-                                st.success("✅ Matplotlib instalado correctamente")
-                            else:
-                                st.error("❌ No se pudo instalar matplotlib automáticamente")
-                    
-                    # Intentar generar la visualización
-                    fig_vista_frontal = dibujar_vista_frontal_viga(
-                        b=b_corte,
-                        h=h_corte,
-                        d=d_corte,
-                        tipo_fierro=tipo_fierro,
-                        cantidad_fierro=cantidad_fierro,
-                        Av_estribo=Av_estribo,
-                        s_estribos=s_estimado_viz,
-                        zona_critica=zona_critica_viz
-                    )
-                    
-                    if fig_vista_frontal:
-                        st.pyplot(fig_vista_frontal)
-                        
-                        # Información adicional sobre la visualización
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.info("**🔍 Elementos mostrados:**")
-                            st.write("• Acero principal (naranja)")
-                            st.write("• Acero de temperatura (verde)")
-                            st.write("• Estribos (azul)")
-                            st.write("• Recubrimiento (rojo punteado)")
-                        
-                        with col2:
-                            st.info("**📐 Dimensiones:**")
-                            st.write(f"• Ancho: {b_corte} cm")
-                            st.write(f"• Alto: {h_corte} cm")
-                            st.write(f"• Peralte efectivo: {d_corte} cm")
-                            st.write(f"• Estribos: {cantidad_fierro} φ{tipo_fierro}")
-                    else:
-                        # Mostrar información alternativa cuando no hay visualización
-                        st.warning("📊 Visualización no disponible - Mostrando información alternativa")
-                        
-                        # Generar visualización textual
-                        viga_ascii, info_adicional = generar_visualizacion_texto_viga(
-                            b_corte, h_corte, d_corte, tipo_fierro, cantidad_fierro, 
-                            Av_estribo, s_estimado_viz, zona_critica_viz
-                        )
-                        
-                        # Información textual de la viga
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.info("**🏗️ Esquema de la Viga:**")
-                            st.code("\n".join(viga_ascii), language="text")
-                        
-                        with col2:
-                            st.markdown(info_adicional)
-                        
-                        # Botón para instalar matplotlib
-                        if st.button("🔧 Instalar Matplotlib Automáticamente", type="primary", key="install_matplotlib_vista"):
-                            with st.spinner("Instalando matplotlib..."):
-                                if verificar_matplotlib():
-                                    st.success("✅ Matplotlib instalado correctamente")
-                                    st.rerun()
-                                else:
-                                    st.error("❌ No se pudo instalar matplotlib automáticamente")
-                                    st.info("💡 Ejecuta manualmente: pip install matplotlib")
-                        
-                        # Información adicional
-                        mostrar_error_matplotlib("datos_entrada")
-                        
-                except Exception as e:
-                    st.error(f"❌ Error al generar visualización: {str(e)}")
-                    st.info("💡 Intentando instalar matplotlib automáticamente...")
-                    
-                    # Intentar instalar matplotlib
-                    if verificar_matplotlib():
-                        st.success("✅ Matplotlib instalado correctamente")
-                        st.rerun()
-                    else:
-                        st.error("❌ No se pudo instalar matplotlib automáticamente")
-                        mostrar_error_matplotlib("datos_entrada_error")
             
             with tab2:
                 st.subheader("🔬 Cálculos - Valores Preliminares")
                 
-                # Verificación previa de datos
-                st.markdown("**🔍 Verificación Previa de Datos:**")
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    # Verificar relación d/h
-                    if h_corte > 0 and d_corte > 0:
-                        relacion_dh = d_corte / h_corte
-                        if 0.8 <= relacion_dh <= 0.95:
-                            st.success(f"✅ Relación d/h: {relacion_dh:.2f} (OK)")
-                        else:
-                            st.warning(f"⚠️ Relación d/h: {relacion_dh:.2f} (Revisar)")
-                    
-                    # Verificar relación b/h
-                    if h_corte > 0 and b_corte > 0:
-                        relacion_bh = b_corte / h_corte
-                        if 0.3 <= relacion_bh <= 0.8:
-                            st.success(f"✅ Relación b/h: {relacion_bh:.2f} (OK)")
-                        else:
-                            st.warning(f"⚠️ Relación b/h: {relacion_bh:.2f} (Revisar)")
-                
-                with col2:
-                    # Verificar cargas
-                    if CM_corte > 0 or CV_corte > 0:
-                        w_total_verif = (CM_corte + CV_corte) * b_corte / 100
-                        if 100 <= w_total_verif <= 2000:
-                            st.success(f"✅ Carga total: {w_total_verif:.0f} kg/m (OK)")
-                        else:
-                            st.warning(f"⚠️ Carga total: {w_total_verif:.0f} kg/m (Revisar)")
-                    
-                    # Verificar espaciamiento de estribos
-                    if cantidad_fierro > 0 and L_corte > 0:
-                        s_verif = L_corte * 100 / cantidad_fierro
-                        if 5 <= s_verif <= 60:
-                            st.success(f"✅ Espaciamiento: {s_verif:.1f} cm (OK)")
-                        else:
-                            st.warning(f"⚠️ Espaciamiento: {s_verif:.1f} cm (Revisar)")
-                
-                # Resumen de datos de entrada
-                st.markdown("**📋 Resumen de Datos de Entrada:**")
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.write(f"**Propiedades de la Viga:**")
-                    st.write(f"- f'c: {fc_corte} kg/cm²")
-                    st.write(f"- b: {b_corte} cm")
-                    st.write(f"- h: {h_corte} cm")
-                    st.write(f"- d: {d_corte} cm")
-                    st.write(f"- L: {L_corte} m")
-                    st.write(f"- fy: {fy_corte} kg/cm²")
-                
-                with col2:
-                    st.write(f"**Cargas y Estribos:**")
-                    st.write(f"- CM: {CM_corte} kg/m²")
-                    st.write(f"- CV: {CV_corte} kg/m²")
-                    st.write(f"- Vu: {Vu_corte} kg")
-                    st.write(f"- Cantidad fierro: {cantidad_fierro}")
-                    st.write(f"- Tipo fierro: {tipo_fierro}")
-                    st.write(f"- Av: {Av_estribo} cm²")
-                
                 # Botón para calcular
                 if st.button("🚀 Calcular Ejercicio de Corte", type="primary", key="calcular_corte"):
-                    # Validación final antes del cálculo
-                    errores = []
+                    # Cálculos del ejercicio de corte
+                    resultados_corte = calcular_ejercicio_basico_corte(
+                        fc_corte, b_corte, d_corte, Vu_corte, fy_corte, 
+                        L_corte, CM_corte, CV_corte, num_estribos
+                    )
                     
-                    if d_corte >= h_corte:
-                        errores.append("El peralte efectivo debe ser menor que el peralte total")
+                    # Guardar resultados en session state
+                    st.session_state['resultados_corte'] = resultados_corte
+                    st.session_state['datos_entrada_corte'] = {
+                        'fc': fc_corte, 'b': b_corte, 'd': d_corte, 'L': L_corte,
+                        'fy': fy_corte, 'CM': CM_corte, 'CV': CV_corte, 'Vu': Vu_corte
+                    }
                     
-                    if fc_corte < 175 or fc_corte > 700:
-                        errores.append("f'c debe estar entre 175 y 700 kg/cm²")
-                    
-                    if b_corte < 20 or b_corte > 100:
-                        errores.append("El ancho debe estar entre 20 y 100 cm")
-                    
-                    if d_corte < 30 or d_corte > 100:
-                        errores.append("El peralte efectivo debe estar entre 30 y 100 cm")
-                    
-                    if Vu_corte < 1000 or Vu_corte > 100000:
-                        errores.append("Vu debe estar entre 1000 y 100000 kg")
-                    
-                    if errores:
-                        st.error("❌ Errores en los datos de entrada:")
-                        for error in errores:
-                            st.write(f"- {error}")
-                    else:
-                        # Cálculos del ejercicio de corte con nuevos parámetros
-                        resultados_corte = calcular_ejercicio_basico_corte(
-                            fc_corte, b_corte, d_corte, Vu_corte, fy_corte, 
-                            L_corte, CM_corte, CV_corte, cantidad_fierro, Av_estribo
-                        )
-                        
-                        # Guardar resultados en session state
-                        st.session_state['resultados_corte'] = resultados_corte
-                        st.session_state['datos_entrada_corte'] = {
-                            'fc': fc_corte, 'b': b_corte, 'h': h_corte, 'd': d_corte, 'L': L_corte,
-                            'fy': fy_corte, 'CM': CM_corte, 'CV': CV_corte, 'Vu': Vu_corte,
-                            'cantidad_fierro': cantidad_fierro, 'tipo_fierro': tipo_fierro, 'Av_estribo': Av_estribo
-                        }
-                        
-                        st.success("¡Ejercicio de corte calculado exitosamente!")
-                        st.balloons()
+                    st.success("¡Ejercicio de corte calculado exitosamente!")
+                    st.balloons()
                 
                 # Mostrar valores preliminares si existen resultados
                 if 'resultados_corte' in st.session_state:
@@ -5244,12 +4410,6 @@ Plan: Gratuito
                         st.metric("Resistencia Nominal (Vc)", f"{resultados['Vc']:.0f} kg")
                         st.metric("Corte Resistente (φVc)", f"{resultados['phiVc']:.0f} kg")
                         st.metric("φVc/2", f"{resultados['phiVc_mitad']:.0f} kg")
-                        
-                        # Mostrar información del peralte
-                        if 'datos_entrada_corte' in st.session_state:
-                            datos = st.session_state['datos_entrada_corte']
-                            st.info(f"Peralte Total: {datos.get('h', 60)} cm")
-                            st.info(f"Peralte Efectivo: {datos.get('d', 54)} cm")
                     
                     with col2:
                         st.metric("Vu Final", f"{resultados['Vu_final']:.0f} kg")
@@ -5300,27 +4460,18 @@ Plan: Gratuito
                         st.metric("Espaciamiento Estribado", f"{resultados['s_estribado']:.1f} cm")
                         st.metric("Refuerzo Mínimo (Av,min)", f"{resultados['Av_min']:.3f} cm²/cm")
                         st.metric("Factor de Seguridad", f"{resultados['Vu_final'] / resultados['phiVc']:.2f}")
-                        
-                        # Mostrar información del estribo seleccionado
-                        if 'datos_entrada_corte' in st.session_state:
-                            datos = st.session_state['datos_entrada_corte']
-                            st.info(f"Estribo seleccionado: {datos.get('tipo_fierro', '3/8\"')} - {datos.get('Av_estribo', 0.71)} cm²")
                     
                     with col2:
                         if resultados['zona_critica']:
                             st.warning("⚠️ Zona Crítica - Requiere refuerzo")
                             st.info("📋 Distribución recomendada:")
                             st.write("- 1@5cm, 5@10cm, resto@25cm")
-                            if 'datos_entrada_corte' in st.session_state:
-                                datos = st.session_state['datos_entrada_corte']
-                                st.write(f"- Usar estribos {datos.get('tipo_fierro', '3/8\"')}")
+                            st.write("- Usar estribos #3 (φ3/8\")")
                         else:
                             st.success("✅ Zona No Crítica")
                             st.info("📋 Estribos mínimos:")
                             st.write("- Espaciamiento máximo: d/2 o 60cm")
-                            if 'datos_entrada_corte' in st.session_state:
-                                datos = st.session_state['datos_entrada_corte']
-                                st.write(f"- Diámetro mínimo: {datos.get('tipo_fierro', '3/8\"')}")
+                            st.write("- Diámetro mínimo: φ3/8\"")
                         
                         if resultados['verificacion']:
                             st.success("✅ Verificación: CUMPLE")
@@ -5395,39 +4546,6 @@ Plan: Gratuito
                     )
                     if fig_estribado:
                         st.pyplot(fig_estribado)
-                    else:
-                        st.info("📊 Gráfico no disponible - Matplotlib no está instalado")
-                    
-                    # Gráfico 3: Vista frontal de la viga con acero de temperatura
-                    st.markdown("**🏗️ Vista Frontal - Viga con Acero de Temperatura:**")
-                    fig_vista_frontal = dibujar_vista_frontal_viga(
-                        b=datos_entrada['b'],
-                        h=datos_entrada['h'],
-                        d=datos_entrada['d'],
-                        tipo_fierro=datos_entrada['tipo_fierro'],
-                        cantidad_fierro=datos_entrada['cantidad_fierro'],
-                        Av_estribo=datos_entrada['Av_estribo'],
-                        s_estribos=resultados['s_estribos'],
-                        zona_critica=resultados['zona_critica']
-                    )
-                    if fig_vista_frontal:
-                        st.pyplot(fig_vista_frontal)
-                        
-                        # Información adicional sobre la visualización
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.info("**🔍 Elementos mostrados:**")
-                            st.write("• Acero principal (naranja)")
-                            st.write("• Acero de temperatura (verde)")
-                            st.write("• Estribos (azul)")
-                            st.write("• Recubrimiento (rojo punteado)")
-                        
-                        with col2:
-                            st.info("**📐 Información del diseño:**")
-                            st.write(f"• Zona: {'Crítica' if resultados['zona_critica'] else 'No Crítica'}")
-                            st.write(f"• Espaciamiento: {resultados['s_estribos']:.1f} cm")
-                            st.write(f"• Estribos: {datos_entrada['cantidad_fierro']} φ{datos_entrada['tipo_fierro']}")
-                            st.write(f"• Av: {datos_entrada['Av_estribo']} cm²")
                     else:
                         st.info("📊 Gráfico no disponible - Matplotlib no está instalado")
                     
@@ -5568,47 +4686,8 @@ Plan: Gratuito
                     with col3:
                         st.metric("Luz del Elemento", f"{L_corte_mccormac} m")
                 
-                # Dibujo del corte lateral derecho con estribos detallados
-                st.subheader("✂️ Corte Lateral Derecho - Viga con Estribos")
-                
-                # Obtener resultados de corte desde session state
-                if 'resultados_corte' in st.session_state and 'datos_entrada_corte' in st.session_state:
-                    resultados_corte = st.session_state['resultados_corte']
-                    datos_entrada = st.session_state['datos_entrada_corte']
-                    
-                    # Dibujar corte lateral derecho con estribos detallados
-                    fig_corte_lateral = dibujar_corte_lateral_derecho(
-                        b=datos_entrada['b'],
-                        h=datos_entrada['h'],
-                        d=datos_entrada['d'],
-                        cantidad_fierro=datos_entrada['cantidad_fierro'],
-                        tipo_fierro=datos_entrada['tipo_fierro'],
-                        Av_estribo=datos_entrada['Av_estribo'],
-                        s_estribos=resultados_corte.get('s_estribos', 20),
-                        zona_critica=resultados_corte.get('zona_critica', False)
-                    )
-                    
-                    if fig_corte_lateral:
-                        st.pyplot(fig_corte_lateral)
-                        
-                        # Información adicional del estribado
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.info(f"**Cantidad de Fierro:** {datos_entrada['cantidad_fierro']}")
-                            st.info(f"**Tipo de Fierro:** {datos_entrada['tipo_fierro']}")
-                            st.info(f"**Área del Estribo:** {datos_entrada['Av_estribo']} cm²")
-                        
-                        with col2:
-                            st.info(f"**Espaciamiento:** {resultados_corte.get('s_estribos', 0):.1f} cm")
-                            st.info(f"**Zona Crítica:** {'Sí' if resultados_corte.get('zona_critica', False) else 'No'}")
-                            st.info(f"**Doblado:** 90° con ganchos de 6db")
-                    else:
-                        st.warning("⚠️ No se pudo generar el gráfico del corte lateral")
-                else:
-                    st.warning("⚠️ No hay resultados de corte disponibles. Realiza primero el cálculo.")
-                
-                # Dibujo de la viga de corte (original)
-                st.subheader("🏗️ Vista Longitudinal de la Viga")
+                # Dibujo de la viga de corte
+                st.subheader("✂️ Dibujo del Elemento a Corte")
                 
                 # Obtener resultados de corte desde session state
                 if 'resultados_corte' in st.session_state:
