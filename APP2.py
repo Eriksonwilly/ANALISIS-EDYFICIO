@@ -2658,19 +2658,24 @@ else:
                 st.rerun()
     
     st.sidebar.markdown("---")
-    st.sidebar.header("📋 Datos del Proyecto")
-    f_c = st.sidebar.number_input("f'c (kg/cm²)", 175, 700, 210, 10)
-    f_y = st.sidebar.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100)
-    L_viga = st.sidebar.number_input("Luz libre de vigas (m)", 3.0, 15.0, 6.0, 0.5)
-    h_piso = st.sidebar.number_input("Altura de piso (m)", 2.5, 5.0, 3.0, 0.1)
-    num_pisos = st.sidebar.number_input("Número de pisos", 1, 100, 15, 1)
-    num_vanos = st.sidebar.number_input("Número de vanos", 1, 20, 3, 1)
-    CM = st.sidebar.number_input("Carga Muerta (kg/m²)", 100, 2000, 150, 50)
-    CV = st.sidebar.number_input("Carga Viva (kg/m²)", 100, 1000, 200, 50)
-    zona_sismica = st.sidebar.selectbox("Zona Sísmica", ["Z1", "Z2", "Z3", "Z4"], 2)
-    tipo_suelo = st.sidebar.selectbox("Tipo de Suelo", ["S1", "S2", "S3", "S4"], 1)
-    tipo_estructura = st.sidebar.selectbox("Tipo de Sistema Estructural", ["Pórticos", "Muros Estructurales", "Dual"], 0)
-    factor_importancia = st.sidebar.number_input("Factor de Importancia (U)", 1.0, 1.5, 1.0, 0.1)
+    st.sidebar.header("📋 Datos del Proyecto - Caso Ayacucho")
+    st.sidebar.info("🏗️ **EDIFICIO DE 3 NIVELES - SERVICIOS PÚBLICOS**")
+    
+    # Datos fijos del caso Ayacucho
+    f_c = st.sidebar.number_input("f'c (kg/cm²)", 175, 700, 210, 10, disabled=True)
+    f_y = st.sidebar.number_input("fy (kg/cm²)", 2800, 6000, 4200, 100, disabled=True)
+    L_viga = st.sidebar.number_input("Luz libre de vigas (m)", 3.0, 15.0, 6.0, 0.5, disabled=True)
+    h_piso = st.sidebar.number_input("Altura de piso (m)", 2.5, 5.0, 3.0, 0.1, disabled=True)
+    num_pisos = st.sidebar.number_input("Número de pisos", 1, 100, 3, 1, disabled=True)
+    num_vanos = st.sidebar.number_input("Número de vanos", 1, 20, 4, 1, disabled=True)
+    CM = st.sidebar.number_input("Carga Muerta (kg/m²)", 100, 2000, 350, 50, disabled=True)
+    CV = st.sidebar.number_input("Carga Viva (kg/m²)", 100, 1000, 250, 50, disabled=True)
+    zona_sismica = st.sidebar.selectbox("Zona Sísmica", ["Z1", "Z2", "Z3", "Z4"], 2, disabled=True)
+    tipo_suelo = st.sidebar.selectbox("Tipo de Suelo", ["S1", "S2", "S3", "S4"], 0, disabled=True)
+    tipo_estructura = st.sidebar.selectbox("Tipo de Sistema Estructural", ["Pórticos", "Muros Estructurales", "Dual"], 2, disabled=True)
+    factor_importancia = st.sidebar.number_input("Factor de Importancia (U)", 1.0, 1.5, 1.0, 0.1, disabled=True)
+    
+    st.sidebar.success("✅ **Datos configurados según análisis presentado**")
 
     # =====================
     # MENÚ PRINCIPAL
@@ -2848,36 +2853,38 @@ else:
             st.title("📊 Análisis Completo de Estructuras")
             st.success("⭐ Plan Premium: Análisis completo con todas las verificaciones")
             
-            # Datos de entrada completos
+            # Datos de entrada completos - Caso Ayacucho
+            st.markdown("### 🏗️ **CASO PRÁCTICO: EDIFICIO DE 3 NIVELES - AYACUCHO**")
+            st.info("📋 **Análisis presentado en memoria de cálculo para Servicios Públicos**")
+            
             col1, col2 = st.columns(2)
             
             with col1:
-                st.subheader("Propiedades del Concreto")
-                st.write(f"**Resistencia del concreto (f'c):** {f_c} kg/cm²")
-                st.write(f"**Resistencia del acero (fy):** {f_y} kg/cm²")
+                st.subheader("🏗️ Propiedades del Proyecto")
+                st.write(f"**Ubicación:** Ayacucho (Zona Sísmica Z3)")
+                st.write(f"**Tipo de Suelo:** S1 (Roca o suelos muy rígidos)")
+                st.write(f"**Factor de Uso:** U = 1.00 (Servicios Públicos)")
+                st.write(f"**Sistema Estructural:** Dual (Pórticos + Muros)")
+                
+                st.subheader("📏 Dimensiones")
+                st.write(f"**Número de pisos:** {num_pisos}")
+                st.write(f"**Número de vanos:** {num_vanos}")
                 st.write(f"**Luz libre de vigas:** {L_viga} m")
                 st.write(f"**Altura de piso:** {h_piso} m")
                 
-                st.subheader("Dimensiones del Proyecto")
-                st.write(f"**Número de pisos:** {num_pisos}")
-                st.write(f"**Número de vanos:** {num_vanos}")
+            with col2:
+                st.subheader("⚖️ Cargas y Materiales")
                 st.write(f"**Carga Muerta:** {CM} kg/m²")
                 st.write(f"**Carga Viva:** {CV} kg/m²")
+                st.write(f"**f'c:** {f_c} kg/cm²")
+                st.write(f"**fy:** {f_y} kg/cm²")
                 
-            with col2:
-                st.subheader("Factores de Diseño")
-                st.write(f"**Zona Sísmica:** {zona_sismica}")
-                st.write(f"**Tipo de Suelo:** {tipo_suelo}")
-                st.write(f"**Tipo de Estructura:** {tipo_estructura}")
-                st.write(f"**Factor de Importancia:** {factor_importancia}")
-                
-                st.subheader("Información Adicional")
-                st.info("El análisis completo incluye:")
-                st.write("✅ Cálculo de propiedades de materiales")
-                st.write("✅ Predimensionamiento automático")
-                st.write("✅ Verificaciones de estabilidad")
-                st.write("✅ Gráficos interactivos")
-                st.write("✅ Reportes técnicos detallados")
+                st.subheader("📊 Resultados Esperados")
+                st.success("**Según análisis presentado:**")
+                st.write("✅ Peso total: 550.5 ton")
+                st.write("✅ Cortante X (Pórticos): 72.2 ton")
+                st.write("✅ Cortante Y (Muros): 96.3 ton")
+                st.write("✅ Cortante promedio: 84.3 ton")
             
             # Botón para ejecutar análisis completo
             if st.button("🔬 Ejecutar Análisis Completo", type="primary"):
@@ -2994,7 +3001,38 @@ else:
                 st.balloons()
                 
                 # MOSTRAR RESULTADOS COMPLETOS INMEDIATAMENTE
-                st.subheader("📊 Resultados del Análisis Completo")
+                st.subheader("📊 Resultados del Análisis Completo - Caso Ayacucho")
+                
+                # Sección especial para caso Ayacucho
+                if zona_sismica == "Z3" and tipo_suelo == "S1":
+                    st.markdown("### 🎯 **VERIFICACIÓN CASO AYACUCHO**")
+                    st.success("🏗️ **EDIFICIO DE 3 NIVELES - SERVICIOS PÚBLICOS**")
+                    
+                    # Comparación directa con análisis presentado
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("📊 Peso Total", f"{peso_total:.1f} ton", 
+                                delta=f"550.5 ton esperado", delta_color="normal")
+                    with col2:
+                        st.metric("🌍 Cortante X", f"{analisis_sismico['cortante_x_ton']:.1f} ton", 
+                                delta=f"72.2 ton esperado", delta_color="normal")
+                    with col3:
+                        st.metric("🏢 Cortante Y", f"{analisis_sismico['cortante_y_ton']:.1f} ton", 
+                                delta=f"96.3 ton esperado", delta_color="normal")
+                    with col4:
+                        st.metric("⚖️ Cortante Promedio", f"{analisis_sismico['cortante_basal_ton']:.1f} ton", 
+                                delta=f"84.3 ton esperado", delta_color="normal")
+                    
+                    # Estado de verificación
+                    if 'caso_ayacucho' in analisis_sismico:
+                        if (analisis_sismico['caso_ayacucho']['coincidencia_peso'] and 
+                            analisis_sismico['caso_ayacucho']['coincidencia_vx'] and 
+                            analisis_sismico['caso_ayacucho']['coincidencia_vy']):
+                            st.success("✅ **VERIFICACIÓN EXITOSA** - Los resultados coinciden con el análisis presentado")
+                        else:
+                            st.warning("⚠️ **VERIFICACIÓN PARCIAL** - Algunos valores difieren del análisis presentado")
+                    
+                    st.markdown("---")
                 
                 # Mostrar resultados en columnas
                 col1, col2 = st.columns(2)
