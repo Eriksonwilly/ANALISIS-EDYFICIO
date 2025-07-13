@@ -104,26 +104,7 @@ except ImportError:
     PLOTLY_AVAILABLE = False
     # No mostrar warning aquí para evitar problemas en la carga inicial
 
-# Función para verificar e instalar matplotlib si es necesario
-def verificar_matplotlib():
-    """Verifica si matplotlib está disponible y lo instala si es necesario"""
-    global MATPLOTLIB_AVAILABLE, plt, Rectangle, Polygon, Patch
-    
-    # Si ya está disponible, no hacer nada
-    if MATPLOTLIB_AVAILABLE and plt is not None and Rectangle is not None and Patch is not None:
-        return True
-    
-    # Intentar reimportar
-    if importar_matplotlib():
-        return True
-    
-    # Si no funciona, intentar instalar
-    try:
-        import subprocess
-        import sys
-        import os
-        
-        print("🔧 Intentando instalar matplotlib...")
+
         
         # Verificar si estamos en un entorno virtual o conda
         if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
